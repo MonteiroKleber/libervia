@@ -7,7 +7,6 @@
 ## Autores
 
 Kleber Monteiro
-Bazari / Libervia Project
 monteiro.kleber276@gmail.com
 
 ---
