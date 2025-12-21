@@ -6,9 +6,9 @@
 
 ## Autores
 
-[Nome do Autor Principal]
+Kleber Monteiro
 Bazari / Libervia Project
-[Email]
+monteiro.kleber276@gmail.com
 
 ---
 
