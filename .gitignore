@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Test artifacts (keep manually committed ones)
+coverage/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+.tmp/
+
+# Runtime test data (auto-generated)
+test-data-runtime/
+test-data-runtime-orq/
+test-data-signatures/

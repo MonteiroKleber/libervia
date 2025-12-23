@@ -1,0 +1,46 @@
+{
+  "generated_at": "2025-12-23T17:06:47.116Z",
+  "data_dir": "./test-data-signatures",
+  "total_events": 10,
+  "segments": [
+    {
+      "segment": 1,
+      "eventCount": 5,
+      "firstEventId": "evt-mjiu7kbr-qnldkr",
+      "lastEventId": "evt-mjiu7kc3-lax676",
+      "firstHash": "14fc6d6dcccd20fddb51ddc4848bcdd06e7ed8fa873395a2bbc722fddd3ce666",
+      "lastHash": "168ca1496e89940e296d7f6eab91572dc184dd71f6498fb1497476e9db527cfd"
+    },
+    {
+      "segment": 2,
+      "eventCount": 5,
+      "firstEventId": "evt-mjiu7kc6-2cqqjo",
+      "lastEventId": "evt-mjiu7kck-udvosp",
+      "firstHash": "2ced1578c20668174ae1cd4a0e88181a5c1d154ebfcd228e27f4f6a628afb8cc",
+      "lastHash": "db56b70f7b475e1bfabbfecf4e75069180fc2d40ca6c0afa2bc0020211cca51a"
+    }
+  ],
+  "snapshot": {
+    "exists": true,
+    "last_segment": 2,
+    "last_event_id": "evt-mjiu7kck-udvosp",
+    "last_current_hash": "db56b70f7b475e1bfabbfecf4e75069180fc2d40ca6c0afa2bc0020211cca51a",
+    "total_events": 10
+  },
+  "chain_verification": {
+    "valid": true,
+    "total_verified": 10,
+    "first_invalid_index": null,
+    "reason": null
+  },
+  "genesis_event": {
+    "id": "evt-mjiu7kbr-qnldkr",
+    "current_hash": "14fc6d6dcccd20fddb51ddc4848bcdd06e7ed8fa873395a2bbc722fddd3ce666",
+    "timestamp": "2025-12-23T17:06:47.079Z"
+  },
+  "last_event": {
+    "id": "evt-mjiu7kck-udvosp",
+    "current_hash": "db56b70f7b475e1bfabbfecf4e75069180fc2d40ca6c0afa2bc0020211cca51a",
+    "timestamp": "2025-12-23T17:06:47.108Z"
+  }
+}

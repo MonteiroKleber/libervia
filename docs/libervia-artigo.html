@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Brain | Cérebro Institucional</title>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --text: #eaeaea;
+            --text-muted: #a0a0a0;
+            --bg: #0f0f1a;
+            --card-bg: #1a1a2e;
+            --border: #2a2a4a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            font-size: 17px;
+        }
+
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--highlight);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background: var(--highlight);
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-bottom: 3px solid var(--highlight);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .authors {
+            margin-top: 30px;
+            color: var(--text-muted);
+        }
+
+        .section {
+            margin: 50px 0;
+            padding: 30px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border-left: 4px solid var(--highlight);
+        }
+
+        h2 {
+            color: var(--highlight);
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            color: var(--text);
+            font-size: 1.3em;
+            margin: 25px 0 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--accent);
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .diagram {
+            background: #0a0a15;
+            padding: 25px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.5;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+
+        .highlight-box {
+            background: var(--accent);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--highlight);
+        }
+
+        .quote {
+            font-style: italic;
+            font-size: 1.2em;
+            color: var(--highlight);
+            text-align: center;
+            padding: 30px;
+            margin: 30px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .keyword {
+            background: var(--accent);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .abstract {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            padding: 40px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        .references {
+            font-size: 0.95em;
+        }
+
+        .references p {
+            margin-bottom: 10px;
+            padding-left: 30px;
+            text-indent: -30px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            background: var(--primary);
+            margin-top: 50px;
+            border-top: 3px solid var(--highlight);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            background: var(--highlight);
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        /* Language visibility */
+        .lang-en, .lang-pt {
+            display: none;
+        }
+
+        body.show-en .lang-en {
+            display: block;
+        }
+
+        body.show-pt .lang-pt {
+            display: block;
+        }
+
+        body.show-en table.lang-en {
+            display: table;
+        }
+
+        body.show-pt table.lang-pt {
+            display: table;
+        }
+
+        body.show-en .lang-en-inline,
+        body.show-pt .lang-pt-inline {
+            display: inline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .diagram {
+                font-size: 11px;
+            }
+
+            .lang-switch {
+                top: 10px;
+                right: 10px;
+            }
+
+            .lang-btn {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body class="show-en">
+
+    <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLang('en')">English</button>
+        <button class="lang-btn" onclick="setLang('pt')">Português</button>
+    </div>
+
+    <header>
+        <h1>
+            <span class="lang-en">Institutional Brain</span>
+            <span class="lang-pt">Cérebro Institucional</span>
+        </h1>
+        <p class="subtitle">
+            <span class="lang-en">A Cognitive Architecture for Risk-Based Decision Making with Persistent Memory</span>
+            <span class="lang-pt">Uma Arquitetura Cognitiva para Decisão sob Risco com Memória Persistente</span>
+        </p>
+        <div class="authors">
+            <p>Libervia Project</p>
+            <p>December 2024</p>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Abstract -->
+        <div class="abstract">
+            <h2>
+                <span class="lang-en">Abstract</span>
+                <span class="lang-pt">Resumo</span>
+            </h2>
+
+            <div class="lang-en">
+                <p>This paper presents the concept of <strong>Institutional Brain</strong> — a layered cognitive architecture designed to fill a critical gap in current artificial intelligence systems: the inability to make decisions under real uncertainty, accumulate institutional experience, and maintain historical coherence over time.</p>
+                <p>Unlike traditional approaches based on reward optimization or statistical correlation, the proposed model introduces the concept of <strong>artificial experience</strong> — where decision-making agents assume risks, face real consequences, and record immutable episodes that inform future decisions.</p>
+                <p>The architecture is structured in five distinct layers: (1) Execution, (2) Observable Context, (3) Risk-Based Decision, (4) Cognitive Orchestration, and (5) Human Interface. The system operates based on three fundamental premises: without risk there is no decision, without consequence there is no learning, without memory there is no wisdom.</p>
+            </div>
+
+            <div class="lang-pt">
+                <p>Este artigo apresenta o conceito de <strong>Cérebro Institucional</strong> — uma arquitetura cognitiva em camadas projetada para preencher uma lacuna crítica nos sistemas de inteligência artificial atuais: a incapacidade de tomar decisões sob incerteza real, acumular vivência institucional e manter coerência histórica ao longo do tempo.</p>
+                <p>Diferente de abordagens tradicionais baseadas em otimização de recompensas ou correlação estatística, o modelo proposto introduz o conceito de <strong>vivência artificial</strong> — onde agentes decisores assumem riscos, enfrentam consequências reais e registram episódios imutáveis que informam decisões futuras.</p>
+                <p>A arquitetura é estruturada em cinco camadas distintas: (1) Execução, (2) Contexto Observável, (3) Decisão sob Risco, (4) Orquestração Cognitiva e (5) Interface Humana. O sistema opera com base em três premissas fundamentais: sem risco não há decisão, sem consequência não há aprendizado, sem memória não há sabedoria.</p>
+            </div>
+
+            <div class="keywords">
+                <span class="keyword lang-en">Institutional Brain</span>
+                <span class="keyword lang-pt">Cérebro Institucional</span>
+                <span class="keyword lang-en">Risk-Based Decision</span>
+                <span class="keyword lang-pt">Decisão sob Risco</span>
+                <span class="keyword lang-en">Institutional Memory</span>
+                <span class="keyword lang-pt">Memória Institucional</span>
+                <span class="keyword lang-en">Artificial Experience</span>
+                <span class="keyword lang-pt">Vivência Artificial</span>
+                <span class="keyword lang-en">Cognitive Agents</span>
+                <span class="keyword lang-pt">Agentes Cognitivos</span>
+            </div>
+        </div>
+
+        <!-- Section 1: Introduction -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">1. Introduction</span>
+                <span class="lang-pt">1. Introdução</span>
+            </h2>
+
+            <h3>
+                <span class="lang-en">1.1 Context and Motivation</span>
+                <span class="lang-pt">1.1 Contexto e Motivação</span>
+            </h3>
+
+            <div class="lang-en">
+                <p>Institutions fail because they do not remember, do not learn, and do not decide coherently over time. People leave, teams change, contexts transform — but decisions continue to be made as if each cycle started from zero.</p>
+                <p>Current artificial intelligence, despite significant advances in natural language processing and pattern recognition, still does not solve this fundamental problem. Large Language Model (LLM) based systems do not maintain persistent memory between sessions. Autonomous agents like AutoGPT and CrewAI execute tasks but do not accumulate institutional experience. Reinforcement learning systems optimize metrics but do not assume risk in the institutional sense.</p>
+            </div>
+
+            <div class="lang-pt">
+                <p>Instituições falham porque não lembram, não aprendem e não decidem de forma coerente ao longo do tempo. Pessoas saem, times mudam, contextos se transformam — mas decisões continuam sendo tomadas como se cada ciclo começasse do zero.</p>
+                <p>A inteligência artificial atual, apesar de avanços significativos em processamento de linguagem natural e reconhecimento de padrões, ainda não resolve este problema fundamental. Sistemas baseados em Large Language Models (LLMs) não mantêm memória persistente entre sessões. Agentes autônomos como AutoGPT e CrewAI executam tarefas, mas não acumulam vivência institucional. Sistemas de aprendizado por reforço otimizam métricas, mas não assumem risco no sentido institucional.</p>
+            </div>
+
+            <h3>
+                <span class="lang-en">1.2 The Identified Gap</span>
+                <span class="lang-pt">1.2 O Gap Identificado</span>
+            </h3>
+
+            <table class="lang-en">
+                <thead>
+                    <tr>
+                        <th>Characteristic</th>
+                        <th>Current AI</th>
+                        <th>Institutional Need</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Memory</td>
+                        <td>Session or dataset</td>
+                        <td>Persistent and immutable</td>
+                    </tr>
+                    <tr>
+                        <td>Decision</td>
+                        <td>Probabilistic calculation</td>
+                        <td>Real risk assumption</td>
+                    </tr>
+                    <tr>
+                        <td>Identity</td>
+                        <td>Neutral/Resettable</td>
+                        <td>Persistent behavioral profile</td>
+                    </tr>
+                    <tr>
+                        <td>Consequence</td>
+                        <td>Simulated</td>
+                        <td>Real and observable</td>
+                    </tr>
+                    <tr>
+                        <td>Learning</td>
+                        <td>By correlation</td>
+                        <td>By experience</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="lang-pt">
+                <thead>
+                    <tr>
+                        <th>Característica</th>
+                        <th>IA Atual</th>
+                        <th>Necessidade Institucional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Memória</td>
+                        <td>Sessão ou dataset</td>
+                        <td>Persistente e imutável</td>
+                    </tr>
+                    <tr>
+                        <td>Decisão</td>
+                        <td>Cálculo probabilístico</td>
+                        <td>Assunção de risco real</td>
+                    </tr>
+                    <tr>
+                        <td>Identidade</td>
+                        <td>Neutra/Resetável</td>
+                        <td>Perfil comportamental persistente</td>
+                    </tr>
+                    <tr>
+                        <td>Consequência</td>
+                        <td>Simulada</td>
+                        <td>Real e observável</td>
+                    </tr>
+                    <tr>
+                        <td>Aprendizado</td>
+                        <td>Por correlação</td>
+                        <td>Por vivência</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>
+                <span class="lang-en">1.3 Contribution</span>
+                <span class="lang-pt">1.3 Contribuição</span>
+            </h3>
+
+            <div class="lang-en">
+                <p>This work proposes the <strong>Institutional Brain</strong> — a cognitive architecture that:</p>
+                <ol>
+                    <li>Structurally separates thinking from executing</li>
+                    <li>Introduces the concept of artificial experience</li>
+                    <li>Maintains immutable decision memory</li>
+                    <li>Operates with behavioral risk profiles</li>
+                    <li>Accumulates institutional wisdom over time</li>
+                </ol>
+            </div>
+
+            <div class="lang-pt">
+                <p>Este trabalho propõe o <strong>Cérebro Institucional</strong> — uma arquitetura cognitiva que:</p>
+                <ol>
+                    <li>Separa estruturalmente pensar de executar</li>
+                    <li>Introduz o conceito de vivência artificial</li>
+                    <li>Mantém memória decisória imutável</li>
+                    <li>Opera com perfis comportamentais de risco</li>
+                    <li>Acumula sabedoria institucional ao longo do tempo</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Section 2: Theoretical Foundations -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">2. Theoretical Foundations</span>
+                <span class="lang-pt">2. Fundamentos Teóricos</span>
+            </h2>
+
+            <h3>
+                <span class="lang-en">2.1 Decision vs. Execution</span>
+                <span class="lang-pt">2.1 Decisão vs. Execução</span>
+            </h3>
+
+            <div class="quote">
+                <span class="lang-en">"Thinking is not executing. Deciding is not acting. Learning is not optimizing."</span>
+                <span class="lang-pt">"Pensar não é executar. Decidir não é agir. Aprender não é otimizar."</span>
+            </div>
+
+            <div class="lang-en">
+                <p>This separation is not technical convenience — it is a condition for real learning. When the same entity that executes also decides, errors repeat, shortcuts become rules, memory is lost, and responsibility dilutes.</p>
+            </div>
+
+            <div class="lang-pt">
+                <p>Esta separação não é conveniência técnica — é condição para aprendizado real. Quando a mesma entidade que executa também decide, erros se repetem, atalhos viram regra, memória se perde e responsabilidade se dilui.</p>
+            </div>
+
+            <h3>
+                <span class="lang-en">2.2 Definition of Decision</span>
+                <span class="lang-pt">2.2 Definição de Decisão</span>
+            </h3>
+
+            <div class="lang-en">
+                <p>Not all processing is decision. In the proposed model, decision only exists when:</p>
+                <ul>
+                    <li>There is real risk of error</li>
+                    <li>The consequence matters</li>
+                    <li>The impact is persistent</li>
+                    <li>The cost is not fully predictable</li>
+                </ul>
+                <p><strong>Where there is no risk, there is only execution.</strong></p>
+            </div>
+
+            <div class="lang-pt">
+                <p>Nem todo processamento é decisão. No modelo proposto, decisão só existe quando:</p>
+                <ul>
+                    <li>Há risco real de erro</li>
+                    <li>A consequência importa</li>
+                    <li>O impacto é persistente</li>
+                    <li>O custo não é totalmente previsível</li>
+                </ul>
+                <p><strong>Onde não há risco, há apenas execução.</strong></p>
+            </div>
+
+            <h3>
+                <span class="lang-en">2.3 Artificial Experience</span>
+                <span class="lang-pt">2.3 Vivência Artificial</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Traditional AI:</strong></p>
+                <ul>
+                    <li>Learns patterns</li>
+                    <li>Adjusts parameters</li>
+                    <li>Maximizes externally defined rewards</li>
+                    <li>Can be restarted, recalibrated, or retrained</li>
+                </ul>
+                <p><strong>Institutional Brain:</strong></p>
+                <ul>
+                    <li>Assumes risk</li>
+                    <li>Decides without guarantee of success</li>
+                    <li>Faces real consequences</li>
+                    <li>Records immutable episodes</li>
+                    <li>Consults its own history before deciding again</li>
+                </ul>
+                <p>Memory is not a dataset — it is a sequence of experiences. Without lived history, there is no mature decision.</p>
+            </div>
+
+            <div class="lang-pt">
+                <p><strong>IA Tradicional:</strong></p>
+                <ul>
+                    <li>Aprende padrões</li>
+                    <li>Ajusta parâmetros</li>
+                    <li>Maximiza recompensas definidas externamente</li>
+                    <li>Pode ser reiniciada, recalibrada ou re-treinada</li>
+                </ul>
+                <p><strong>Cérebro Institucional:</strong></p>
+                <ul>
+                    <li>Assume risco</li>
+                    <li>Decide sem garantia de acerto</li>
+                    <li>Enfrenta consequências reais</li>
+                    <li>Registra episódios imutáveis</li>
+                    <li>Consulta sua própria história antes de decidir novamente</li>
+                </ul>
+                <p>A memória não é um dataset — é uma sequência de vivências. Sem histórico vivido, não existe decisão madura.</p>
+            </div>
+
+            <h3>
+                <span class="lang-en">2.4 Fundamental Premises</span>
+                <span class="lang-pt">2.4 Premissas Fundamentais</span>
+            </h3>
+
+            <div class="highlight-box">
+                <div class="lang-en">
+                    <ol>
+                        <li><strong>Without risk, there is no decision</strong></li>
+                        <li><strong>Without consequence, there is no learning</strong></li>
+                        <li><strong>Without memory, there is no wisdom</strong></li>
+                    </ol>
+                </div>
+                <div class="lang-pt">
+                    <ol>
+                        <li><strong>Sem risco, não há decisão</strong></li>
+                        <li><strong>Sem consequência, não há aprendizado</strong></li>
+                        <li><strong>Sem memória, não há sabedoria</strong></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: System Architecture -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">3. System Architecture</span>
+                <span class="lang-pt">3. Arquitetura do Sistema</span>
+            </h2>
+
+            <div class="lang-en">
+                <p>The architecture is composed of five distinct layers, operating in two separate domains:</p>
+            </div>
+            <div class="lang-pt">
+                <p>A arquitetura é composta por cinco camadas distintas, operando em dois domínios separados:</p>
+            </div>
+
+            <div class="diagram">┌─────────────────────────────────────────────────────────┐
+│                    LIBERVIA (Thinks/Pensa)               │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  Layer/Camada 5: Human Interface                │    │
+│  │  Supervision · Values · Limits                  │    │
+│  ├─────────────────────────────────────────────────┤    │
+│  │  Layer/Camada 4: Cognitive Orchestrator         │    │
+│  │  Routing · Coordination · Flow                  │    │
+│  ├─────────────────────────────────────────────────┤    │
+│  │  Layer/Camada 3: Risk-Based Decision            │    │
+│  │  Episodes · Profiles · Memory · Judgment        │    │
+│  └─────────────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────────────┤
+│                    BAZARI (Executes/Executa)             │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  Layer/Camada 2: Observable Context             │    │
+│  │  Sensors · State · Metrics                      │    │
+│  ├─────────────────────────────────────────────────┤    │
+│  │  Layer/Camada 1: Execution                      │    │
+│  │  Actions · Operations · Results                 │    │
+│  └─────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘</div>
+
+            <h3>
+                <span class="lang-en">3.1 Layer 1 — Execution (Bazari)</span>
+                <span class="lang-pt">3.1 Camada 1 — Execução (Bazari)</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Function:</strong> Execute actions in the real world.</p>
+                <ul>
+                    <li>Does not make strategic decisions</li>
+                    <li>Receives instructions from Libervia</li>
+                    <li>Returns observable results</li>
+                    <li>Operates systems, markets, processes</li>
+                </ul>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Função:</strong> Executar ações no mundo real.</p>
+                <ul>
+                    <li>Não toma decisões estratégicas</li>
+                    <li>Recebe instruções da Libervia</li>
+                    <li>Retorna resultados observáveis</li>
+                    <li>Opera sistemas, mercados, processos</li>
+                </ul>
+            </div>
+
+            <h3>
+                <span class="lang-en">3.2 Layer 2 — Observable Context</span>
+                <span class="lang-pt">3.2 Camada 2 — Contexto Observável</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Function:</strong> Capture and structure the state of the world.</p>
+                <ul>
+                    <li>Sensors that observe Layer 1</li>
+                    <li>Transforms events into structured context</li>
+                    <li>Feeds Layer 3 with information</li>
+                </ul>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Função:</strong> Capturar e estruturar o estado do mundo.</p>
+                <ul>
+                    <li>Sensores que observam a Camada 1</li>
+                    <li>Transforma eventos em contexto estruturado</li>
+                    <li>Alimenta a Camada 3 com informação</li>
+                </ul>
+            </div>
+
+            <h3>
+                <span class="lang-en">3.3 Layer 3 — Risk-Based Decision</span>
+                <span class="lang-pt">3.3 Camada 3 — Decisão sob Risco</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Function:</strong> Make decisions where real uncertainty exists. This is the central layer of the Institutional Brain.</p>
+                <p><strong>Components:</strong></p>
+                <ol>
+                    <li><strong>Decision Episodes</strong> — Immutable records of each decision</li>
+                    <li><strong>Behavioral Profiles</strong> — Conservative, Moderate, Aggressive, Hybrid</li>
+                    <li><strong>Institutional Memory</strong> — Queryable episode base</li>
+                    <li><strong>Judgment Engine</strong> — Evaluates options against history</li>
+                </ol>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Função:</strong> Tomar decisões onde existe incerteza real. Esta é a camada central do Cérebro Institucional.</p>
+                <p><strong>Componentes:</strong></p>
+                <ol>
+                    <li><strong>Episódios de Decisão</strong> — Registros imutáveis de cada decisão</li>
+                    <li><strong>Perfis Comportamentais</strong> — Conservador, Moderado, Agressivo, Híbrido</li>
+                    <li><strong>Memória Institucional</strong> — Base de episódios consultável</li>
+                    <li><strong>Motor de Julgamento</strong> — Avalia opções contra histórico</li>
+                </ol>
+            </div>
+
+            <h3>
+                <span class="lang-en">3.4 Layer 4 — Cognitive Orchestrator</span>
+                <span class="lang-pt">3.4 Camada 4 — Orquestrador Cognitivo</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Function:</strong> Coordinate the decision flow.</p>
+                <ul>
+                    <li>Receive decision requests</li>
+                    <li>Route to appropriate agents</li>
+                    <li>Ensure limits are respected</li>
+                    <li>Escalate to humans when necessary</li>
+                </ul>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Função:</strong> Coordenar o fluxo decisório.</p>
+                <ul>
+                    <li>Receber solicitações de decisão</li>
+                    <li>Rotear para agentes apropriados</li>
+                    <li>Garantir que limites sejam respeitados</li>
+                    <li>Escalar para humanos quando necessário</li>
+                </ul>
+            </div>
+
+            <h3>
+                <span class="lang-en">3.5 Layer 5 — Human Interface</span>
+                <span class="lang-pt">3.5 Camada 5 — Interface Humana</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Function:</strong> Define values, limits, and supervise.</p>
+                <p><strong>Principle:</strong> The human does not decide everything. They define the space where the agent can decide. Human authority is structural, not operational.</p>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Função:</strong> Definir valores, limites e supervisionar.</p>
+                <p><strong>Princípio:</strong> O humano não decide tudo. Ele define o espaço onde o agente pode decidir. A autoridade humana é estrutural, não operacional.</p>
+            </div>
+        </div>
+
+        <!-- Section 4: Decision Episode Model -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">4. Decision Episode Model</span>
+                <span class="lang-pt">4. Modelo de Episódio de Decisão</span>
+            </h2>
+
+            <div class="lang-en">
+                <p>Each episode is an immutable record containing:</p>
+            </div>
+            <div class="lang-pt">
+                <p>Cada episódio é um registro imutável contendo:</p>
+            </div>
+
+            <div class="diagram">DECISION EPISODE / EPISÓDIO DE DECISÃO
+├── id: unique identifier / identificador único
+├── timestamp: moment of decision / momento da decisão
+├── context / contexto
+│   ├── situation / situação
+│   ├── urgency / urgência
+│   ├── domain / domínio
+│   └── available_information / informações_disponíveis
+├── objective / objetivo
+├── options[] / opcoes[]
+│   ├── description / descricao
+│   ├── risks[] / riscos[]
+│   ├── estimated_impact / impacto_estimado
+│   └── reversibility / reversibilidade
+├── decision / decisao
+│   ├── chosen_option / opcao_escolhida
+│   ├── justification / justificativa
+│   ├── applied_profile / perfil_aplicado
+│   └── respected_limits / limites_respeitados
+├── consequence / consequencia
+│   ├── observed / observada
+│   ├── perceived / percebida
+│   └── observation_timestamp / timestamp_observacao
+└── learning / aprendizado
+    ├── success / sucesso
+    ├── relevant_factors / fatores_relevantes
+    └── suggested_adjustment / ajuste_sugerido</div>
+
+            <div class="highlight-box">
+                <div class="lang-en">
+                    <p><strong>Immutability:</strong> Episodes are never deleted, never recalculated, never retroactively reinterpreted. The past remains intact. The agent learns to live with it.</p>
+                </div>
+                <div class="lang-pt">
+                    <p><strong>Imutabilidade:</strong> Episódios nunca são apagados, nunca são recalculados, nunca são reinterpretados retroativamente. O passado permanece intacto. O agente aprende a conviver com ele.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Behavioral Profiles -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">5. Behavioral Profiles</span>
+                <span class="lang-pt">5. Perfis Comportamentais</span>
+            </h2>
+
+            <table class="lang-en">
+                <thead>
+                    <tr>
+                        <th>Profile</th>
+                        <th>Characteristic</th>
+                        <th>Tendency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Conservative</strong></td>
+                        <td>Prioritizes safety</td>
+                        <td>Avoids risks, prefers status quo</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Moderate</strong></td>
+                        <td>Balanced</td>
+                        <td>Accepts calculated risk</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aggressive</strong></td>
+                        <td>Prioritizes opportunity</td>
+                        <td>Accepts greater risks for greater gains</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hybrid</strong></td>
+                        <td>Contextual</td>
+                        <td>Varies by domain</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="lang-pt">
+                <thead>
+                    <tr>
+                        <th>Perfil</th>
+                        <th>Característica</th>
+                        <th>Tendência</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Conservador</strong></td>
+                        <td>Prioriza segurança</td>
+                        <td>Evita riscos, prefere status quo</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Moderado</strong></td>
+                        <td>Equilibrado</td>
+                        <td>Aceita risco calculado</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Agressivo</strong></td>
+                        <td>Prioriza oportunidade</td>
+                        <td>Aceita riscos maiores por ganhos maiores</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Híbrido</strong></td>
+                        <td>Contextual</td>
+                        <td>Varia conforme domínio</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="lang-en">
+                <p>The profile is not static. It evolves based on decision history, success/failure rate, observed consequences, and Layer 5 feedback.</p>
+                <p><strong>Two agents with the same context and information can and should decide differently.</strong> This is not an error — it is a reflection of distinct experiences.</p>
+            </div>
+            <div class="lang-pt">
+                <p>O perfil não é estático. Ele evolui com base em histórico de decisões, taxa de sucesso/falha, consequências observadas e feedback da Camada 5.</p>
+                <p><strong>Dois agentes com mesmo contexto e informações podem e devem decidir diferente.</strong> Isso não é erro — é reflexo de vivências distintas.</p>
+            </div>
+        </div>
+
+        <!-- Section 6: Teaching vs Experience -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">6. Teaching vs. Experience</span>
+                <span class="lang-pt">6. Ensino vs. Vivência</span>
+            </h2>
+
+            <div class="lang-en">
+                <p><strong>Teaching</strong> is the initial configuration phase: definition of values, definition of limits, exposure to historical cases, transmission of principles.</p>
+                <p><em>Teaching creates foundation, but does not create wisdom.</em></p>
+                <p><strong>Experience</strong> is the real operation phase: own decisions, real consequences, accumulated successes and failures, gradual behavior change.</p>
+                <p><em>Only experience transforms the agent into a reliable decision-maker.</em></p>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Ensino</strong> é a fase de configuração inicial: definição de valores, definição de limites, exposição a casos históricos, transmissão de princípios.</p>
+                <p><em>Ensino cria base, mas não cria sabedoria.</em></p>
+                <p><strong>Vivência</strong> é a fase de operação real: decisões próprias, consequências reais, sucessos e falhas acumulados, mudança gradual de comportamento.</p>
+                <p><em>Somente a vivência transforma o agente em um decisor confiável.</em></p>
+            </div>
+
+            <table class="lang-en">
+                <thead>
+                    <tr>
+                        <th>Phase</th>
+                        <th>Human</th>
+                        <th>Agent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Teaching</td>
+                        <td>Formal education</td>
+                        <td>Initial configuration</td>
+                    </tr>
+                    <tr>
+                        <td>Experience</td>
+                        <td>Professional experience</td>
+                        <td>Production operation</td>
+                    </tr>
+                    <tr>
+                        <td>Wisdom</td>
+                        <td>Maturity</td>
+                        <td>Consolidated history</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="lang-pt">
+                <thead>
+                    <tr>
+                        <th>Fase</th>
+                        <th>Humano</th>
+                        <th>Agente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ensino</td>
+                        <td>Educação formal</td>
+                        <td>Configuração inicial</td>
+                    </tr>
+                    <tr>
+                        <td>Vivência</td>
+                        <td>Experiência profissional</td>
+                        <td>Operação em produção</td>
+                    </tr>
+                    <tr>
+                        <td>Sabedoria</td>
+                        <td>Maturidade</td>
+                        <td>Histórico consolidado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 7: Decision Flow -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">7. Decision Flow</span>
+                <span class="lang-pt">7. Fluxo Decisório</span>
+            </h2>
+
+            <h3>
+                <span class="lang-en">7.1 Main Flow</span>
+                <span class="lang-pt">7.1 Fluxo Principal</span>
+            </h3>
+
+            <div class="diagram">1. Bazari detects situation requiring decision
+   Bazari detecta situação que requer decisão
+                    ↓
+2. Layer 2 structures context
+   Camada 2 estrutura contexto
+                    ↓
+3. Layer 4 receives and classifies request
+   Camada 4 recebe e classifica solicitação
+                    ↓
+4. Agent (Layer 3) consults similar episodes
+   Agente (Camada 3) consulta episódios similares
+                    ↓
+5. Agent evaluates options against risk profile
+   Agente avalia opções contra perfil de risco
+                    ↓
+6. Agent verifies Layer 5 limits
+   Agente verifica limites da Camada 5
+                    ↓
+7. Agent makes decision / Episode is recorded
+   Agente toma decisão / Episódio é registrado
+                    ↓
+8. Decision sent to Bazari to execute
+   Decisão enviada para Bazari executar
+                    ↓
+9. Layer 2 observes consequence
+   Camada 2 observa consequência
+                    ↓
+10. Episode updated / Learning consolidated
+    Episódio atualizado / Aprendizado consolidado</div>
+
+            <h3>
+                <span class="lang-en">7.2 Alternative Flows</span>
+                <span class="lang-pt">7.2 Fluxos Alternativos</span>
+            </h3>
+
+            <div class="lang-en">
+                <p><strong>Escalation to Human:</strong></p>
+                <ul>
+                    <li>If risk exceeds limit</li>
+                    <li>If there is no similar episode</li>
+                    <li>If potential consequence is irreversible</li>
+                </ul>
+                <p><strong>Aborted Decision:</strong></p>
+                <ul>
+                    <li>If limits would be violated</li>
+                    <li>If information is insufficient</li>
+                    <li>If no option is acceptable</li>
+                </ul>
+            </div>
+            <div class="lang-pt">
+                <p><strong>Escalação para Humano:</strong></p>
+                <ul>
+                    <li>Se risco excede limite</li>
+                    <li>Se não há episódio similar</li>
+                    <li>Se consequência potencial é irreversível</li>
+                </ul>
+                <p><strong>Decisão Abortada:</strong></p>
+                <ul>
+                    <li>Se limites seriam violados</li>
+                    <li>Se informação é insuficiente</li>
+                    <li>Se nenhuma opção é aceitável</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 8: Discussion -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">8. Discussion</span>
+                <span class="lang-pt">8. Discussão</span>
+            </h2>
+
+            <h3>
+                <span class="lang-en">8.1 Contributions</span>
+                <span class="lang-pt">8.1 Contribuições</span>
+            </h3>
+
+            <div class="lang-en">
+                <ol>
+                    <li><strong>Concept of Artificial Experience:</strong> First formalization of learning by real consequence in AI</li>
+                    <li><strong>5-Layer Architecture:</strong> Clear separation between thinking and executing</li>
+                    <li><strong>Immutable Episodes:</strong> Memory that is not rewritten</li>
+                    <li><strong>Risk Profiles:</strong> Agents with decision-making identity</li>
+                </ol>
+            </div>
+            <div class="lang-pt">
+                <ol>
+                    <li><strong>Conceito de Vivência Artificial:</strong> Primeira formalização de aprendizado por consequência real em IA</li>
+                    <li><strong>Arquitetura em 5 Camadas:</strong> Separação clara entre pensar e executar</li>
+                    <li><strong>Episódios Imutáveis:</strong> Memória que não é reescrita</li>
+                    <li><strong>Perfis de Risco:</strong> Agentes com identidade decisória</li>
+                </ol>
+            </div>
+
+            <h3>
+                <span class="lang-en">8.2 Limitations</span>
+                <span class="lang-pt">8.2 Limitações</span>
+            </h3>
+
+            <div class="lang-en">
+                <ol>
+                    <li><strong>Cold Start:</strong> New agent has no history</li>
+                    <li><strong>Consequence Definition:</strong> Requires system capable of observing results</li>
+                    <li><strong>Scalability:</strong> Episode queries can grow</li>
+                </ol>
+            </div>
+            <div class="lang-pt">
+                <ol>
+                    <li><strong>Cold Start:</strong> Agente novo não tem histórico</li>
+                    <li><strong>Definição de Consequência:</strong> Requer sistema capaz de observar resultados</li>
+                    <li><strong>Escalabilidade:</strong> Consulta a episódios pode crescer</li>
+                </ol>
+            </div>
+
+            <h3>
+                <span class="lang-en">8.3 Future Work</span>
+                <span class="lang-pt">8.3 Trabalhos Futuros</span>
+            </h3>
+
+            <div class="lang-en">
+                <ol>
+                    <li>Proof of concept implementation</li>
+                    <li>Agent maturity metrics</li>
+                    <li>Experience transfer protocol between agents</li>
+                    <li>Integration with LLMs as reasoning engine</li>
+                </ol>
+            </div>
+            <div class="lang-pt">
+                <ol>
+                    <li>Implementação de prova de conceito</li>
+                    <li>Métricas de maturidade de agente</li>
+                    <li>Protocolo de transferência de vivência entre agentes</li>
+                    <li>Integração com LLMs como motor de raciocínio</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Section 9: Conclusion -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">9. Conclusion</span>
+                <span class="lang-pt">9. Conclusão</span>
+            </h2>
+
+            <div class="lang-en">
+                <p>This work presented the Institutional Brain — a cognitive architecture for risk-based decision making with persistent memory. The model proposes an evolutionary layer for AI, where agents not only process information but develop decision-making identity through experience.</p>
+                <p>The separation between Libervia (thinks) and Bazari (executes), combined with immutable episodes and behavioral profiles, offers an alternative to traditional AI based on correlation and optimization.</p>
+                <p>The system does not promise perfection. It promises cognitive continuity — the ability of an institution to remember, learn, and decide coherently over time.</p>
+            </div>
+            <div class="lang-pt">
+                <p>Este trabalho apresentou o Cérebro Institucional — uma arquitetura cognitiva para decisão sob risco com memória persistente. O modelo propõe uma camada evolutiva para IA, onde agentes não apenas processam informação, mas desenvolvem identidade decisória através de vivência.</p>
+                <p>A separação entre Libervia (pensa) e Bazari (executa), combinada com episódios imutáveis e perfis comportamentais, oferece uma alternativa à IA tradicional baseada em correlação e otimização.</p>
+                <p>O sistema não promete perfeição. Promete continuidade cognitiva — a capacidade de uma instituição lembrar, aprender e decidir de forma coerente ao longo do tempo.</p>
+            </div>
+
+            <div class="quote">
+                <span class="lang-en">"Without risk, there is no decision. Without consequence, there is no learning. Without memory, there is no wisdom."</span>
+                <span class="lang-pt">"Sem risco, não há decisão. Sem consequência, não há aprendizado. Sem memória, não há sabedoria."</span>
+            </div>
+        </div>
+
+        <!-- References -->
+        <div class="section references">
+            <h2>
+                <span class="lang-en">References</span>
+                <span class="lang-pt">Referências</span>
+            </h2>
+
+            <p>[1] Russell, S., & Norvig, P. (2020). Artificial Intelligence: A Modern Approach. 4th Edition.</p>
+            <p>[2] Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction. 2nd Edition.</p>
+            <p>[3] Walsh, J. P., & Ungson, G. R. (1991). Organizational Memory. Academy of Management Review.</p>
+            <p>[4] Woolridge, M. (2009). An Introduction to MultiAgent Systems. 2nd Edition.</p>
+            <p>[5] Kahneman, D. (2011). Thinking, Fast and Slow. Farrar, Straus and Giroux.</p>
+            <p>[6] Simon, H. A. (1997). Administrative Behavior: A Study of Decision-Making Processes. 4th Edition.</p>
+        </div>
+
+        <!-- Glossary -->
+        <div class="section">
+            <h2>
+                <span class="lang-en">Glossary</span>
+                <span class="lang-pt">Glossário</span>
+            </h2>
+
+            <table class="lang-en">
+                <thead>
+                    <tr>
+                        <th>Term</th>
+                        <th>Definition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Institutional Brain</td>
+                        <td>Cognitive architecture for risk-based decision</td>
+                    </tr>
+                    <tr>
+                        <td>Episode</td>
+                        <td>Immutable record of a decision</td>
+                    </tr>
+                    <tr>
+                        <td>Experience</td>
+                        <td>Learning by real consequence</td>
+                    </tr>
+                    <tr>
+                        <td>Risk Profile</td>
+                        <td>Behavioral tendency of the agent</td>
+                    </tr>
+                    <tr>
+                        <td>Libervia</td>
+                        <td>Entity that thinks (Layers 3-5)</td>
+                    </tr>
+                    <tr>
+                        <td>Bazari</td>
+                        <td>Entity that executes (Layers 1-2)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="lang-pt">
+                <thead>
+                    <tr>
+                        <th>Termo</th>
+                        <th>Definição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cérebro Institucional</td>
+                        <td>Arquitetura cognitiva para decisão sob risco</td>
+                    </tr>
+                    <tr>
+                        <td>Episódio</td>
+                        <td>Registro imutável de uma decisão</td>
+                    </tr>
+                    <tr>
+                        <td>Vivência</td>
+                        <td>Aprendizado por consequência real</td>
+                    </tr>
+                    <tr>
+                        <td>Perfil de Risco</td>
+                        <td>Tendência comportamental do agente</td>
+                    </tr>
+                    <tr>
+                        <td>Libervia</td>
+                        <td>Entidade que pensa (Camadas 3-5)</td>
+                    </tr>
+                    <tr>
+                        <td>Bazari</td>
+                        <td>Entidade que executa (Camadas 1-2)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <footer>
+        <p><strong>Libervia Project</strong></p>
+        <p>
+            <span class="status">Version 1.0</span>
+            <span class="status">December 2024</span>
+        </p>
+        <p style="margin-top: 20px; color: var(--text-muted);">
+            <span class="lang-en">Conceptual Technical Paper</span>
+            <span class="lang-pt">Paper Técnico Conceitual</span>
+        </p>
+    </footer>
+
+    <script>
+        function setLang(lang) {
+            document.body.classList.remove('show-en', 'show-pt');
+            document.body.classList.add('show-' + lang);
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            localStorage.setItem('preferredLang', lang);
+        }
+
+        // Load preferred language
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLang = localStorage.getItem('preferredLang') || 'en';
+            setLang(savedLang);
+
+            // Update button state
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(savedLang === 'en' ? 'english' : 'português')) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

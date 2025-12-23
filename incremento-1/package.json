@@ -1,0 +1,28 @@
+{
+  "name": "libervia-incremento-1",
+  "version": "1.0.0",
+  "description": "Libervia - Cérebro Institucional (Incremento 1 + 2)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "validate:inc4_3": "ts-node scripts/validate_inc4_3.ts"
+  },
+  "keywords": [
+    "libervia",
+    "institutional-brain",
+    "decision-making"
+  ],
+  "author": "Bazari",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
