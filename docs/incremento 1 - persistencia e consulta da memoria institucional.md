@@ -2559,4 +2559,205 @@ Procedimento operacional documentado em:
 
 ---
 
+## INCREMENTO 6 — OBSERVABILIDADE E AUDITORIA INTERNA
+
+O Incremento 6 habilita **visibilidade operacional interna** através de um control-plane HTTP e dashboards estáticos.
+
+### 6.1 Escopo
+
+- Control-plane leve com endpoints de auditoria
+- Dashboards estáticos em Markdown/JSON
+- Métricas mínimas de saúde e operação
+- Sem interface pública (apenas operadores internos)
+
+### 6.2 Control-Plane
+
+Servidor HTTP interno acessível via localhost:
+
+```bash
+npm run control-plane:start
+```
+
+Endpoints disponíveis:
+
+| Endpoint | Descrição |
+|----------|-----------|
+| `GET /health/eventlog` | Status do EventLog |
+| `GET /audit/export` | Exportar eventos para auditoria |
+| `GET /audit/replay` | Resumo operacional |
+| `GET /dashboard/protocols` | Estatísticas de protocolos |
+| `GET /dashboard/summary` | Resumo geral do sistema |
+
+### 6.3 Autenticação
+
+```bash
+# Configurar token via ambiente
+export CONTROL_PLANE_TOKEN="meu-token-secreto"
+
+# Usar em requisições
+curl -H "Authorization: Bearer meu-token-secreto" http://localhost:3001/health/eventlog
+```
+
+Em desenvolvimento sem token configurado, acesso é permitido.
+
+### 6.4 Dashboards Estáticos
+
+```bash
+npm run dashboards:generate
+```
+
+Gera arquivos em `dashboards/`:
+- `dashboard-YYYYMMDD-HHMMSS.md` - Markdown
+- `dashboard-YYYYMMDD-HHMMSS.json` - Dados brutos
+
+### 6.5 Métricas Disponíveis
+
+| Métrica | Fonte |
+|---------|-------|
+| EventLog status | `GetEventLogStatus()` |
+| Protocolos por estado | DecisionProtocolRepository |
+| Eventos por tipo | `ReplayEventLog()` |
+| Eventos por ator | `ReplayEventLog()` |
+
+### 6.6 Garantias
+
+| Garantia | Status |
+|----------|--------|
+| Não afeta lógica de decisão | ✅ |
+| Falhas não bloqueiam operações | ✅ |
+| Apenas acesso interno | ✅ |
+| Reuso de APIs existentes | ✅ |
+
+### 6.7 Testes
+
+16 testes automatizados cobrindo:
+- Endpoints de health, export, replay
+- Estatísticas de protocolos
+- Autenticação por token
+- Geração de dashboards
+
+### 6.8 Runbook
+
+Procedimento operacional documentado em:
+`docs/runbooks/auditoria_operacional.md`
+
+### 6.9 Limitações
+
+| Limitação | Motivo |
+|-----------|--------|
+| Token estático | Simplicidade inicial |
+| Apenas localhost | Segurança |
+| Sem TLS | Escopo interno |
+| Sem rate limiting | Escopo interno |
+
+---
+
+## INCREMENTO 7 — INTERFACE CONTROLADA BAZARI ↔ LIBERVIA
+
+### 7.1 Escopo
+
+O Incremento 7 define a **interface de integração** entre Bazari (executor) e Libervia (cérebro institucional):
+
+- **Contrato único de saída**: Toda decisão flui através de `ContratoDeDecisao`
+- **Sem vazamento de dados**: Adapter encapsula Orquestrador
+- **Auditabilidade**: Toda interação logada no EventLog
+- **Validação obrigatória**: Protocolo sempre validado antes da decisão
+
+### 7.2 Estrutura de Arquivos
+
+```
+incremento-1/
+├── integracoes/
+│   └── bazari/
+│       └── Adapter.ts           # Interface controlada
+├── scripts/
+│   └── bazari_load_test.ts      # Harness de carga
+└── testes/
+    └── incremento7.test.ts      # 28 testes
+```
+
+### 7.3 BazariAdapter
+
+```typescript
+class BazariAdapter {
+  // ÚNICO método que retorna contrato
+  async solicitarDecisao(
+    situacaoData: SituacaoInput,
+    protocoloData: DadosProtocoloInput,
+    token?: string
+  ): Promise<ContratoComMetadados>;
+
+  // Status baseado no contrato (sem acesso interno)
+  consultarStatusDoContrato(
+    contrato: ContratoDeDecisao,
+    token?: string
+  ): StatusEpisodioPublico;
+
+  // Contagem de requisições
+  getRequestCount(): number;
+}
+```
+
+### 7.4 Fluxo de Integração
+
+```
+┌─────────┐                      ┌──────────────────┐                      ┌──────────────────────┐
+│ Bazari  │ ──solicitarDecisao──>│ BazariAdapter    │ ──ProcessarSolic──> │ OrquestradorCognitivo│
+│         │                      │                  │                      │                      │
+│         │ <───────────────────── ContratoDeDecisao│ <─────────────────── │                      │
+└─────────┘     (ÚNICA SAÍDA)    └──────────────────┘                      └──────────────────────┘
+```
+
+### 7.5 Garantias de Segurança
+
+| Garantia | Implementação |
+|----------|---------------|
+| Única saída | Apenas `ContratoDeDecisao` retornado |
+| Sem delete/update | Repositórios não possuem esses métodos |
+| Protocolo obrigatório | Validação antes de `RegistrarDecisao` |
+| Token de integração | `LIBERVIA_INTEGRATION_TOKEN` |
+
+### 7.6 Script de Load Test
+
+```bash
+# Executar teste de carga
+npm run bazari:load-test [N] [DATA_DIR]
+
+# Exemplo com 100 requisições
+npm run bazari:load-test 100
+```
+
+**Validações**:
+- Apenas contratos retornados
+- Sem vazamento de dados
+- Chain válida pós-stress
+- Replay determinístico
+
+### 7.7 Testes Automatizados
+
+28 testes cobrindo:
+- Fluxo completo via adapter
+- Validação de token
+- Protocolo rejeitado
+- Sem vazamento de dados
+- Garantias de imutabilidade
+- Stress test (N=20)
+- Replay determinístico
+
+### 7.8 Runbook
+
+Checklist de garantias documentado em:
+`docs/runbooks/garantias_integracao_bazari.md`
+
+### 7.9 Limitações
+
+| Limitação | Motivo | Mitigação Futura |
+|-----------|--------|------------------|
+| Token estático | Simplicidade | JWT/OAuth |
+| Sem rate limiting | Escopo interno | Middleware |
+| Síncrono apenas | Simplicidade | Async/queue |
+| Harness interno | Sem API pública | REST API |
+
+---
+
 Aguardando instrução para próximo incremento.

@@ -9,7 +9,10 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "validate:inc4_3": "ts-node scripts/validate_inc4_3.ts",
-    "backup-frio": "ts-node scripts/backup_frio_eventlog.ts"
+    "backup-frio": "ts-node scripts/backup_frio_eventlog.ts",
+    "control-plane:start": "ts-node control-plane/Server.ts",
+    "dashboards:generate": "ts-node scripts/gerar_dashboard_eventlog.ts",
+    "bazari:load-test": "ts-node scripts/bazari_load_test.ts"
   },
   "keywords": [
     "libervia",
