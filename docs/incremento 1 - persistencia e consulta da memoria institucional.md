@@ -2451,4 +2451,112 @@ INCREMENTO 1 ESTÁ COMPLETO, TESTADO E CANÔNICO. Todas as correções críticas
 Todas as garantias do Incremento 0 preservadas.
 Persistência robusta e auditável.
 Memória institucional consultável sem opinião.
+
+---
+
+## INCREMENTO 5 — BACKUP FRIO DO EVENTLOG
+
+O Incremento 5 adiciona capacidade de **backup frio** (cold backup) do EventLog, permitindo recuperação de desastre com verificação de integridade.
+
+### 5.1 Escopo
+
+- Exportação segura de todos os segmentos e snapshot do EventLog
+- Empacotamento em formato tar.gz com manifest de integridade
+- Checksums SHA-256 para verificação
+- Restauração com validação automática
+
+### 5.2 Script de Backup
+
+```bash
+# Uso básico
+npm run backup-frio
+
+# Com diretórios customizados
+npm run backup-frio -- ./data ./backups
+```
+
+Saída:
+```
+backup-eventlog-YYYYMMDD-HHMMSS.tar.gz    # Pacote compactado
+backup-eventlog-YYYYMMDD-HHMMSS.manifest.json  # Manifest com checksums
+```
+
+### 5.3 Manifest JSON
+
+```typescript
+interface BackupManifest {
+  version: 1;
+  created_at: string;
+  source_dir: string;
+  files: Array<{
+    path: string;
+    size: number;
+    sha256: string;
+  }>;
+  eventlog_summary: {
+    total_events: number;
+    total_segments: number;
+    first_event_id: string | null;
+    last_event_id: string | null;
+    last_current_hash: string | null;
+    snapshot_exists: boolean;
+  };
+  chain_valid_at_backup: boolean;
+}
+```
+
+### 5.4 Restauração
+
+```bash
+# Extrair backup
+tar -xzf backup-eventlog-YYYYMMDD-HHMMSS.tar.gz -C ./data-restored
+
+# Verificar integridade
+npx ts-node -e "
+const { EventLogRepositoryImpl } = require('./event-log/EventLogRepositoryImpl');
+(async () => {
+  const el = await EventLogRepositoryImpl.create('./data-restored');
+  const result = await el.verifyChain();
+  console.log('Válido:', result.valid);
+})();
+"
+```
+
+### 5.5 Garantias
+
+| Garantia | Status |
+|----------|--------|
+| Backup não bloqueia operações | ✅ |
+| Checksums SHA-256 em todos os arquivos | ✅ |
+| Manifest com metadados completos | ✅ |
+| Validação de integridade na restauração | ✅ |
+| Idempotência (múltiplos backups não interferem) | ✅ |
+| Compatível com política de retenção (prune) | ✅ |
+
+### 5.6 Testes
+
+17 testes automatizados cobrindo:
+- Backup básico e de EventLog vazio
+- Verificação de manifest e checksums
+- Corrupção de segmento e restauração
+- Corrupção de snapshot e restauração
+- Operação do Orquestrador após restauração
+- Múltiplos segmentos
+- Idempotência
+
+### 5.7 Runbook
+
+Procedimento operacional documentado em:
+`docs/runbooks/desastre_backup_frio.md`
+
+### 5.8 Limitações
+
+| Limitação | Motivo |
+|-----------|--------|
+| Backup local apenas | Escopo do incremento |
+| Sem criptografia | Escopo do incremento |
+| Sem backup incremental | Simplicidade |
+
+---
+
 Aguardando instrução para próximo incremento.

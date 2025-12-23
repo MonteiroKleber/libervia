@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "created_at": "2025-12-23T17:43:43.700Z",
+  "source_dir": "/home/bazari/libervia/libervia/incremento-1/test-data-signatures",
+  "files": [
+    {
+      "path": "event-log/segment-000001.json",
+      "size": 2394,
+      "sha256": "4b84953021aea74c4ffd11668efe435f3e505dfc94dfa41e7e419de409514615"
+    },
+    {
+      "path": "event-log/segment-000002.json",
+      "size": 2453,
+      "sha256": "595baabb7bed43b35ac1889c53ced868d0625aca5fb95b4f53b7a4607ede6ff6"
+    },
+    {
+      "path": "event-log-snapshot.json",
+      "size": 272,
+      "sha256": "f6a1be038ea7e33c79d4b722d276e176d4b5d16ce01120445874d6a39cca1825"
+    }
+  ],
+  "eventlog_summary": {
+    "total_events": 10,
+    "total_segments": 2,
+    "first_event_id": "evt-mjiu7kbr-qnldkr",
+    "last_event_id": "evt-mjiu7kck-udvosp",
+    "last_current_hash": "db56b70f7b475e1bfabbfecf4e75069180fc2d40ca6c0afa2bc0020211cca51a",
+    "snapshot_exists": true
+  },
+  "chain_valid_at_backup": true
+}
