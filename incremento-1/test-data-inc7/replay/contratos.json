@@ -1,0 +1,222 @@
+[
+  {
+    "id": "1766543343434-vqm7qc74n",
+    "episodio_id": "1766543343115-gie15kgmw",
+    "decisao_id": "1766543343302-ftn4wmfrm",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:03.434Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543343833-7f6rlchni",
+    "episodio_id": "1766543343624-at30doggq",
+    "decisao_id": "1766543343703-s6ihio28s",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:03.833Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543344334-or29gm84u",
+    "episodio_id": "1766543344017-vcgom1xys",
+    "decisao_id": "1766543344195-illhsaxzx",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:04.334Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543345177-wiw7uc9x3",
+    "episodio_id": "1766543344697-o2acjp4p5",
+    "decisao_id": "1766543344943-embf41ka9",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:05.177Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543345691-kmcuzlsfy",
+    "episodio_id": "1766543345386-9i2jh59kl",
+    "decisao_id": "1766543345573-yrnnyru5v",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:05.691Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543346261-6ardiege3",
+    "episodio_id": "1766543345938-0bcs5kutl",
+    "decisao_id": "1766543346051-04slrfief",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:06.262Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543347228-yuknj72bw",
+    "episodio_id": "1766543346662-mybs74mk4",
+    "decisao_id": "1766543346984-patlrrlch",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:07.228Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543354681-anyzuyg0q",
+    "episodio_id": "1766543347653-axd1mkvnk",
+    "decisao_id": "1766543348436-r36gtrwcl",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:14.681Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543357317-rq65jvhwp",
+    "episodio_id": "1766543355639-ylrjdpb4i",
+    "decisao_id": "1766543356340-ipqpwcztr",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:17.317Z",
+    "emitido_para": "Bazari"
+  },
+  {
+    "id": "1766543359419-91ubiqgxr",
+    "episodio_id": "1766543358729-zysact6g6",
+    "decisao_id": "1766543359140-44o9ez8jz",
+    "alternativa_autorizada": "Alternativa 1",
+    "limites_execucao": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes_obrigatorias": [],
+    "observacao_minima_requerida": [
+      "Impacto Técnico observado",
+      "Impacto Operacional observado",
+      "Evidências coletadas",
+      "Persistência avaliada"
+    ],
+    "data_emissao": "2025-12-24T02:29:19.419Z",
+    "emitido_para": "Bazari"
+  }
+]

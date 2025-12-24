@@ -1,0 +1,13 @@
+{
+  "subject": "[OK] Metricas Operacao Continua - 2025-12-24T14:22:53.263Z",
+  "body": {
+    "timestamp": "2025-12-24T14:22:53.263Z",
+    "status": "OK",
+    "alertas": [],
+    "resumo": {
+      "eventos": 0,
+      "segmentos": 0,
+      "chain_valid": true
+    }
+  }
+}

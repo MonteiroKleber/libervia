@@ -1,21 +1,21 @@
 import * as fs from 'fs/promises';
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
-import { TipoEvento, TipoEntidade } from '../event-log/EventLogEntry';
-import { computeEventHash, computePayloadHash } from '../utilitarios/HashUtil';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
+import { TipoEvento, TipoEntidade } from '../camada-3/event-log/EventLogEntry';
+import { computeEventHash, computePayloadHash } from '../camada-3/utilitarios/HashUtil';
 
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
 import {
   SituacaoDecisoria,
   StatusSituacao,
   PerfilRisco,
   DadosProtocoloInput
-} from '../entidades/tipos';
+} from '../camada-3/entidades/tipos';
 
 const TEST_DATA_DIR = './test-data-inc4-' + Date.now();
 
@@ -579,7 +579,7 @@ describe('Incremento 4 - Event-Log com Hash Encadeado', () => {
         limites: [{ tipo: 'Financeiro', descricao: 'Max 10k', valor: '10000' }],
         condicoes: ['Condição 1']
       });
-      expect(contrato.emitido_para).toBe('Bazari');
+      expect(contrato.emitido_para).toBe('external');
 
       // Iniciar observação
       await orquestrador.IniciarObservacao(episodio.id);

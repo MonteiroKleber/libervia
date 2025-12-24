@@ -286,7 +286,21 @@ Todos os testes devem passar.
 | Semanal | 4 semanas | Externo (S3/GCS) |
 | Mensal | 12 meses | Externo + Offline |
 
-### 7.1 Automacao (Cron)
+### 7.1 Cadencia de Operacao Continua
+
+**Integrado ao Incremento 9 - Operacao Continua**
+
+| Operacao | Frequencia | Comando | Verificacao |
+|----------|------------|---------|-------------|
+| Backup Frio | Semanal (Dom 02:00) | `npm run backup-frio` | `chain_valid_at_backup: true` |
+| Drill Go-Live | Quinzenal (Seg 08:00) | `npm run drill:go-live` | Cenario 7 (restauracao) passa |
+| Metricas | Continuo | `npm run operacao:metrics` | `dias_desde_ultimo_backup < 7` |
+
+**Alertas de Cadencia**:
+- WARNING: Backup ha mais de 7 dias
+- CRITICAL: Backup ha mais de 14 dias
+
+### 7.2 Automacao (Cron)
 
 ```bash
 # /etc/cron.d/libervia-backup
@@ -294,11 +308,12 @@ Todos os testes devem passar.
 0 3 * * 0 libervia cd /app/incremento-1 && npm run backup-frio -- ./data /backups/weekly
 ```
 
-### 7.2 Monitoramento
+### 7.3 Monitoramento
 
 - Alertar se backup falhar (`success: false`)
 - Alertar se `chain_valid_at_backup: false`
 - Monitorar espaco em disco dos backups
+- Verificar via `npm run operacao:metrics` ou `GET /metrics/operacao`
 
 ---
 
@@ -312,12 +327,80 @@ Todos os testes devem passar.
 
 ---
 
-## 9. Historico de Revisoes
+## 9. Backup Seguro com Assinatura Digital (Incremento 9)
+
+O Incremento 9 introduz backup com assinatura digital Ed25519 para garantir integridade e autenticidade.
+
+### 9.1 Gerar Par de Chaves
+
+```bash
+npm run crypto:generate-keys -- ./keys
+```
+
+Isso gera:
+- `public-key-<keyId>.json` - Chave publica (pode ir no repo)
+- `private-key-<keyId>.json` - Chave privada (**NUNCA** no repo)
+
+### 9.2 Configurar Ambiente
+
+```bash
+export LIBERVIA_SIGNING_KEY="<conteudo-base64-da-chave-privada>"
+export LIBERVIA_PUBLIC_KEY="<conteudo-base64-da-chave-publica>"
+export LIBERVIA_KEY_ID="<keyId>"
+```
+
+### 9.3 Backup Assinado
+
+```bash
+npm run backup:secure -- ./data /backups/local
+```
+
+Gera:
+- `backup-eventlog-YYYYMMDD-HHMMSS.tar.gz`
+- `backup-eventlog-YYYYMMDD-HHMMSS.signed.json` (manifest assinado)
+
+### 9.4 Backup Multi-Destino
+
+```bash
+npm run backup:secure -- ./data /backups/primary /backups/secondary
+```
+
+### 9.5 Restauracao com Verificacao de Assinatura
+
+```bash
+npm run backup:secure -- restore /backups/backup-xxx.tar.gz ./data-restored
+```
+
+A restauracao verifica:
+1. Assinatura digital do manifest
+2. Checksums SHA-256 de cada arquivo
+3. Integridade da cadeia de hashes
+
+### 9.6 Restauracao sem Verificacao (Emergencia)
+
+```bash
+npm run backup:secure -- restore /backups/backup-xxx.tar.gz ./data-restored --skip-verify
+```
+
+**ATENCAO**: Usar apenas em emergencias quando a chave nao esta disponivel.
+
+### 9.7 Erros de Assinatura
+
+| Erro | Causa | Acao |
+|------|-------|------|
+| "Assinatura invalida" | Manifest alterado ou chave errada | Verificar chave publica |
+| "Chave publica nao disponivel" | Env var nao configurada | Configurar LIBERVIA_PUBLIC_KEY |
+| "Backup nao assinado" | Backup sem assinatura | Usar --skip-verify ou re-fazer backup |
+
+---
+
+## 10. Historico de Revisoes
 
 | Data | Versao | Autor | Mudancas |
 |------|--------|-------|----------|
 | 2025-12-23 | 1.0 | Libervia | Versao inicial |
+| 2025-12-23 | 2.0 | Libervia | Adicao de backup seguro (Incremento 9) |
 
 ---
 
-*Documento gerado em: 2025-12-23*
+*Documento atualizado em: 2025-12-23*

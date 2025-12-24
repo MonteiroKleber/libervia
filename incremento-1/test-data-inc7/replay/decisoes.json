@@ -1,0 +1,202 @@
+[
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543343302-ftn4wmfrm",
+    "episodio_id": "1766543343115-gie15kgmw",
+    "data_decisao": "2025-12-24T02:29:03.302Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543343703-s6ihio28s",
+    "episodio_id": "1766543343624-at30doggq",
+    "data_decisao": "2025-12-24T02:29:03.703Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543344195-illhsaxzx",
+    "episodio_id": "1766543344017-vcgom1xys",
+    "data_decisao": "2025-12-24T02:29:04.195Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543344943-embf41ka9",
+    "episodio_id": "1766543344697-o2acjp4p5",
+    "data_decisao": "2025-12-24T02:29:04.943Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543345573-yrnnyru5v",
+    "episodio_id": "1766543345386-9i2jh59kl",
+    "data_decisao": "2025-12-24T02:29:05.573Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543346051-04slrfief",
+    "episodio_id": "1766543345938-0bcs5kutl",
+    "data_decisao": "2025-12-24T02:29:06.051Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543346984-patlrrlch",
+    "episodio_id": "1766543346662-mybs74mk4",
+    "data_decisao": "2025-12-24T02:29:06.984Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543348436-r36gtrwcl",
+    "episodio_id": "1766543347653-axd1mkvnk",
+    "data_decisao": "2025-12-24T02:29:08.436Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543356340-ipqpwcztr",
+    "episodio_id": "1766543355639-ylrjdpb4i",
+    "data_decisao": "2025-12-24T02:29:16.340Z"
+  },
+  {
+    "alternativa_escolhida": "Alternativa 1",
+    "criterios": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "perfil_risco": "MODERADO",
+    "limites": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "condicoes": [],
+    "id": "1766543359140-44o9ez8jz",
+    "episodio_id": "1766543358729-zysact6g6",
+    "data_decisao": "2025-12-24T02:29:19.140Z"
+  }
+]

@@ -1,0 +1,392 @@
+[
+  {
+    "id": "c0eeb8af-1133-48d6-a760-7df26b4d38f4",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 0",
+    "objetivo": "Objetivo de teste 0",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:02.864Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "c20ddccc-6ef8-4545-a633-531d7468fd41",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 1",
+    "objetivo": "Objetivo de teste 1",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:03.487Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "ff5d9998-e214-440d-b3d2-f9926690db23",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 2",
+    "objetivo": "Objetivo de teste 2",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:03.887Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "12553a13-7a0c-4e89-b634-5aa8fa1e3cc2",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 3",
+    "objetivo": "Objetivo de teste 3",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:04.422Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "6d7bb775-a891-4735-af96-b69ef48f82b6",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 4",
+    "objetivo": "Objetivo de teste 4",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:05.221Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "d7284665-a4ab-4378-8791-7a73db077c47",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 5",
+    "objetivo": "Objetivo de teste 5",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:05.767Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "065d0a9e-2b7b-4912-a9e9-54184baa1a60",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 6",
+    "objetivo": "Objetivo de teste 6",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:06.401Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "273e4a93-50b4-4a37-a9d2-ab6c44f88ba1",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 7",
+    "objetivo": "Objetivo de teste 7",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:07.313Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "4bea6288-9876-44d6-b9d1-0e41d8c64673",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 8",
+    "objetivo": "Objetivo de teste 8",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:15.012Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  },
+  {
+    "id": "2fb6ff7d-e18d-45ab-9b9a-4cdc212040b8",
+    "dominio": "tecnologico",
+    "contexto": "Contexto de teste 9",
+    "objetivo": "Objetivo de teste 9",
+    "incertezas": [
+      "Incerteza A",
+      "Incerteza B"
+    ],
+    "alternativas": [
+      {
+        "descricao": "Alternativa 1",
+        "riscos_associados": [
+          "Risco A1"
+        ]
+      },
+      {
+        "descricao": "Alternativa 2",
+        "riscos_associados": [
+          "Risco A2"
+        ]
+      }
+    ],
+    "riscos": [
+      {
+        "descricao": "Risco principal",
+        "tipo": "operacional",
+        "reversibilidade": "reversivel"
+      }
+    ],
+    "urgencia": "media",
+    "capacidade_absorcao": "alta",
+    "consequencia_relevante": "Consequencia relevante",
+    "possibilidade_aprendizado": true,
+    "status": "DECIDIDA",
+    "data_criacao": "2025-12-24T02:29:17.627Z",
+    "caso_uso_declarado": 1,
+    "anexos_analise": []
+  }
+]

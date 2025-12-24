@@ -14,9 +14,9 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 // Imports do projeto
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
-import { TipoEvento, TipoEntidade } from '../event-log/EventLogEntry';
-import { computeEventHash, computePayloadHash } from '../utilitarios/HashUtil';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
+import { TipoEvento, TipoEntidade } from '../camada-3/event-log/EventLogEntry';
+import { computeEventHash, computePayloadHash } from '../camada-3/utilitarios/HashUtil';
 
 // ════════════════════════════════════════════════════════════════════════
 // CONFIGURAÇÃO

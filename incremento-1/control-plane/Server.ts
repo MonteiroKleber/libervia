@@ -22,16 +22,31 @@
 import * as http from 'http';
 import * as url from 'url';
 
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
-import { DecisionProtocolRepository } from '../repositorios/interfaces/DecisionProtocolRepository';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
-import { EstadoProtocolo, PerfilRisco } from '../entidades/tipos';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
+import {
+  authenticate as authModuleAuthenticate,
+  authMiddleware,
+  getSecurityMetrics,
+  validateProductionRequirements,
+  SecurityMetrics
+} from './auth';
+import { DecisionProtocolRepository } from '../camada-3/repositorios/interfaces/DecisionProtocolRepository';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
+import { EstadoProtocolo, PerfilRisco } from '../camada-3/entidades/tipos';
+import {
+  coletarMetricasEventLog,
+  coletarMetricasDrill,
+  coletarMetricasBackup,
+  avaliarAlertas,
+  determinarStatusGeral,
+  OperacaoMetrics
+} from '../scripts/operacao_metrics';
 
 // ════════════════════════════════════════════════════════════════════════
 // CONFIGURACAO
@@ -67,28 +82,10 @@ interface ProtocolStats {
 // AUTENTICACAO
 // ════════════════════════════════════════════════════════════════════════
 
+// Usa modulo de autenticacao reforcado
 function authenticate(req: http.IncomingMessage): boolean {
-  // Em desenvolvimento sem token configurado, permitir acesso
-  if (!IS_PRODUCTION && !TOKEN) {
-    return true;
-  }
-
-  // Requer token em producao ou se configurado
-  if (!TOKEN) {
-    return false;
-  }
-
-  const authHeader = req.headers['authorization'];
-  if (!authHeader) {
-    return false;
-  }
-
-  const [type, token] = authHeader.split(' ');
-  if (type !== 'Bearer' || token !== TOKEN) {
-    return false;
-  }
-
-  return true;
+  const result = authModuleAuthenticate(req);
+  return result.authenticated;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -231,6 +228,43 @@ async function handleDashboardSummary(
   }
 }
 
+/**
+ * Handler para metricas de operacao continua
+ * GET /metrics/operacao
+ */
+async function handleMetricsOperacao(
+  res: http.ServerResponse,
+  dataDir: string
+): Promise<void> {
+  try {
+    const outputDir = './test-artifacts/operacao';
+
+    // Coletar metricas
+    const eventlogMetrics = await coletarMetricasEventLog(dataDir);
+    const drillMetrics = await coletarMetricasDrill(outputDir);
+    const backupMetrics = await coletarMetricasBackup(outputDir);
+
+    // Montar objeto de metricas
+    const metrics: OperacaoMetrics = {
+      timestamp: new Date().toISOString(),
+      data_dir: dataDir,
+      eventlog: eventlogMetrics,
+      drill: drillMetrics,
+      backup: backupMetrics,
+      alertas: [],
+      status_geral: 'OK'
+    };
+
+    // Avaliar alertas
+    metrics.alertas = avaliarAlertas(metrics);
+    metrics.status_geral = determinarStatusGeral(metrics.alertas);
+
+    sendJson(res, 200, metrics);
+  } catch (error: any) {
+    sendError(res, 500, error.message);
+  }
+}
+
 async function getProtocolStats(repo: DecisionProtocolRepositoryImpl): Promise<ProtocolStats> {
   // Acessar store interno via reflexao (para estatisticas apenas)
   const store = (repo as any).store as Map<string, any>;
@@ -324,16 +358,26 @@ async function handleRequest(
         await handleDashboardSummary(ctx, res);
         break;
 
+      case '/metrics/operacao':
+        await handleMetricsOperacao(res, DATA_DIR);
+        break;
+
+      case '/metrics/security':
+        sendJson(res, 200, getSecurityMetrics());
+        break;
+
       case '/':
         sendJson(res, 200, {
           name: 'Libervia Control-Plane',
-          version: '6.0',
+          version: '9.0',
           endpoints: [
             'GET /health/eventlog',
             'GET /audit/export',
             'GET /audit/replay',
             'GET /dashboard/protocols',
-            'GET /dashboard/summary'
+            'GET /dashboard/summary',
+            'GET /metrics/operacao',
+            'GET /metrics/security'
           ]
         });
         break;
@@ -386,6 +430,12 @@ async function createContext(dataDir: string): Promise<ControlPlaneContext> {
 }
 
 async function startServer(): Promise<http.Server> {
+  // Validar requisitos de producao antes de iniciar
+  const prodCheck = validateProductionRequirements();
+  if (!prodCheck.valid) {
+    throw new Error(prodCheck.error);
+  }
+
   const ctx = await createContext(DATA_DIR);
 
   const server = http.createServer((req, res) => {
@@ -400,6 +450,7 @@ async function startServer(): Promise<http.Server> {
     server.listen(PORT, HOST, () => {
       console.log(`[Control-Plane] Servidor iniciado em http://${HOST}:${PORT}`);
       console.log(`[Control-Plane] Token requerido: ${IS_PRODUCTION || TOKEN ? 'Sim' : 'Nao (dev mode)'}`);
+      console.log(`[Control-Plane] Rate limit: ${process.env.CONTROL_PLANE_RATE_LIMIT || '100'} req/min`);
       resolve(server);
     });
   });

@@ -3,6 +3,15 @@
 // ════════════════════════════════════════════════════════════════════════
 
 /**
+ * ActorId - Identificador do ator que originou o evento.
+ *
+ * Valores conhecidos:
+ * - 'Libervia': Sistema interno (orquestrador, serviços)
+ * - Outros: Sistemas externos/integrações (ex: 'external', 'tenant-xyz')
+ */
+type ActorId = string;
+
+/**
  * EventLogEntry - Registro imutável de evento no log encadeado.
  *
  * PRINCÍPIOS:
@@ -22,7 +31,7 @@ interface EventLogEntry {
   timestamp: Date;
 
   /** Ator que originou o evento */
-  actor: 'Libervia' | 'Bazari';
+  actor: ActorId;
 
   /** Tipo do evento (ex: 'SITUACAO_CRIADA', 'DECISAO_REGISTRADA') */
   evento: string;
@@ -101,4 +110,4 @@ interface ChainVerificationResult {
   totalVerified: number;
 }
 
-export { EventLogEntry, TipoEvento, TipoEntidade, ChainVerificationResult };
+export { ActorId, EventLogEntry, TipoEvento, TipoEntidade, ChainVerificationResult };

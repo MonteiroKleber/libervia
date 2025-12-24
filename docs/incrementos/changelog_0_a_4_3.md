@@ -249,6 +249,182 @@ Se `eventLog` nao for fornecido, os metodos de EventLog retornam valores vazios/
 
 ---
 
+### Incremento 5 — Backup Frio
+
+**Escopo**: Backup e restauracao do EventLog.
+
+**Componentes**:
+- `backup_frio_eventlog.ts` - Script de backup/restore
+- Manifest com checksums SHA-256
+
+**Comandos**:
+- `npm run backup-frio`
+
+---
+
+### Incremento 6 — Observabilidade
+
+**Escopo**: Control-plane para monitoramento interno.
+
+**Componentes**:
+- `control-plane/Server.ts` - Servidor HTTP
+- Dashboard de protocolos
+
+**Endpoints**:
+- `GET /health/eventlog`
+- `GET /audit/export`
+- `GET /audit/replay`
+- `GET /dashboard/protocols`
+- `GET /dashboard/summary`
+
+---
+
+### Incremento 7 — Interface Controlada Bazari
+
+**Escopo**: Adapter para integracao Bazari <-> Libervia.
+
+**Componentes**:
+- `BazariAdapter` - Interface controlada
+- Load test script
+
+**Garantias**:
+- Unica saida = ContratoDeDecisao
+- Sem vazamento de dados internos
+- Protocolo obrigatorio
+
+**Comandos**:
+- `npm run bazari:load-test`
+
+---
+
+### Incremento 8 — Preparacao Go-Live
+
+**Escopo**: Validacao de prontidao para producao.
+
+**Componentes**:
+- `drill_go_live.ts` - Script de drill
+- 7 cenarios de caos
+
+**Comandos**:
+- `npm run drill:go-live`
+
+**Garantias Validadas**:
+- Sem delete/update
+- Replay deterministico
+- Adapter funcional
+- Chain valida
+
+---
+
+### Incremento 9 — Operacao Continua
+
+**Escopo**: Institucionalizar operacao continua com cadencia, metricas e alertas.
+
+**Componentes**:
+- `operacao_metrics.ts` - Script de coleta de metricas
+- Endpoint `/metrics/operacao` no control-plane
+- Template de operacao continua
+
+**Comandos**:
+- `npm run operacao:metrics`
+
+**Metricas Monitoradas**:
+- Estado do EventLog (eventos, segmentos, chain)
+- Ultimo drill (tempo, status, taxa sucesso)
+- Ultimo backup (data, tamanho, chain)
+- Dias desde ultimo drill/backup
+
+**Alertas**:
+- WARNING: Thresholds de aviso
+- CRITICAL: Thresholds criticos
+- Exit codes: 0 (OK), 1 (WARNING), 2 (CRITICAL)
+
+**Cadencia Definida**:
+- Drill: Quinzenal
+- Backup: Semanal
+- Dashboard: Diario
+- Metricas: Continuo
+
+**Documentacao**:
+- `docs/estado/operacao_continua.md` - Registro de operacoes
+- `docs/runbooks/operacao_continua.md` - Procedimentos
+
+---
+
+### Incremento 10 — Seguranca Reforcada
+
+**Escopo**: Backup multi-destino com assinatura digital e autenticacao reforcada.
+
+**Componentes**:
+- `scripts/crypto_utils.ts` - Utilitarios Ed25519
+- `scripts/backup_frio_secure.ts` - Backup assinado multi-destino
+- `control-plane/auth.ts` - Autenticacao reforcada
+
+**Comandos**:
+- `npm run backup:secure` - Backup com assinatura
+- `npm run crypto:generate-keys` - Gerar par de chaves
+
+**Features**:
+- Assinatura digital Ed25519 de manifests
+- Multiplos destinos de backup (local, S3, GCS, cold)
+- Verificacao de assinatura na restauracao
+- Rate limiting no control-plane
+- Constant-time token comparison
+- Metricas de seguranca (`/metrics/security`)
+
+**Garantias**:
+- Manifest alterado = assinatura invalida = restauracao bloqueada
+- Token obrigatorio em producao
+- Rate limit 100 req/min por IP
+- Chaves privadas nunca no repo
+
+**Testes**:
+- 27 testes de seguranca em `incremento9.test.ts`
+
+**Documentacao**:
+- `docs/incrementos/incremento9_seguranca.md` - Design
+- `docs/runbooks/gestao_chaves.md` - Gestao de chaves
+- `docs/runbooks/desastre_backup_frio.md` - Atualizado
+
+---
+
+## Roadmap Pos Go-Live (Aprovado)
+
+Apos conclusao dos Incrementos 0-10, o sistema esta pronto para producao. O roadmap futuro foi documentado em [roadmap_pos_golive.md](roadmap_pos_golive.md).
+
+### Proximos Incrementos Planejados
+
+| Incremento | Nome | Horizonte | Status |
+|------------|------|-----------|--------|
+| 11 | Hardening de Producao | Q1 2026 | Planejado |
+| 12 | Observabilidade Proativa | Q1 2026 | Planejado |
+| 13 | Auditoria Externa | Q2 2026 | Planejado |
+| 14 | Multi-Tenancy Preparatorio | Q3 2026 | Planejado |
+| 15 | Integracao Agentes Funcao | Q4 2026 | Planejado |
+| 16 | Agentes de Observacao | 2027+ | Planejado |
+| 17 | Federacao Institucional | 2027+ | Planejado |
+
+### Garantias Canonicas Preservadas
+
+Todos os incrementos futuros devem preservar:
+
+1. **Imutabilidade** - Decisoes, contratos e episodios nao podem ser alterados
+2. **Append-only** - EventLog so permite adicao
+3. **Chain Integrity** - Hashes encadeados detectam corrupcao
+4. **Single Output** - Unica saida para Bazari = ContratoDeDecisao
+5. **No Ranking** - MemoryQueryService nao ordena por relevancia
+6. **Protocol Required** - Toda decisao exige protocolo validado
+
+### Governanca
+
+Processo de governanca documentado em [governanca_incremental.md](../runbooks/governanca_incremental.md).
+
+### Revisao Trimestral
+
+Proxima revisao: **2026-03-23**
+
+---
+
 ## Verificacao de Assinaturas
 
 Para verificar que a API publica esta alinhada com este changelog:
@@ -262,4 +438,4 @@ grep "GetEventLogStatus" orquestrador/OrquestradorCognitivo.ts
 ---
 
 *Documento gerado em: 2025-12-23*
-*Versao: 4.3*
+*Versao: 10.1 (com roadmap pos go-live)*

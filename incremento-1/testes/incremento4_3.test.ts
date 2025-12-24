@@ -1,14 +1,14 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
-import { TipoEvento, TipoEntidade } from '../event-log/EventLogEntry';
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
+import { TipoEvento, TipoEntidade } from '../camada-3/event-log/EventLogEntry';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
 
 const TEST_DATA_DIR = './test-data-inc4_3-' + Date.now();
 

@@ -10,7 +10,7 @@ import {
   ReplayResult,
   ReplayInconsistency
 } from './EventLogRepository';
-import { EventLogEntry, ChainVerificationResult } from './EventLogEntry';
+import { ActorId, EventLogEntry, ChainVerificationResult } from './EventLogEntry';
 
 // ════════════════════════════════════════════════════════════════════════
 // INCREMENTO 4.2: CONFIGURAÇÃO
@@ -444,7 +444,7 @@ class EventLogRepositoryImpl implements EventLogRepository {
   }
 
   async append(
-    actor: 'Libervia' | 'Bazari',
+    actor: ActorId,
     evento: string,
     entidade: string,
     entidadeId: string,

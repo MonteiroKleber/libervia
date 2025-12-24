@@ -1,0 +1,112 @@
+[
+  {
+    "id": "1766543343115-gie15kgmw",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "c0eeb8af-1133-48d6-a760-7df26b4d38f4",
+    "data_criacao": "2025-12-24T02:29:03.127Z",
+    "data_decisao": "2025-12-24T02:29:03.326Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543343624-at30doggq",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "c20ddccc-6ef8-4545-a633-531d7468fd41",
+    "data_criacao": "2025-12-24T02:29:03.624Z",
+    "data_decisao": "2025-12-24T02:29:03.747Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543344017-vcgom1xys",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "ff5d9998-e214-440d-b3d2-f9926690db23",
+    "data_criacao": "2025-12-24T02:29:04.017Z",
+    "data_decisao": "2025-12-24T02:29:04.238Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543344697-o2acjp4p5",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "12553a13-7a0c-4e89-b634-5aa8fa1e3cc2",
+    "data_criacao": "2025-12-24T02:29:04.700Z",
+    "data_decisao": "2025-12-24T02:29:05.005Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543345386-9i2jh59kl",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "6d7bb775-a891-4735-af96-b69ef48f82b6",
+    "data_criacao": "2025-12-24T02:29:05.386Z",
+    "data_decisao": "2025-12-24T02:29:05.611Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543345938-0bcs5kutl",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "d7284665-a4ab-4378-8791-7a73db077c47",
+    "data_criacao": "2025-12-24T02:29:05.944Z",
+    "data_decisao": "2025-12-24T02:29:06.129Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543346662-mybs74mk4",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "065d0a9e-2b7b-4912-a9e9-54184baa1a60",
+    "data_criacao": "2025-12-24T02:29:06.662Z",
+    "data_decisao": "2025-12-24T02:29:07.073Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543347653-axd1mkvnk",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "273e4a93-50b4-4a37-a9d2-ab6c44f88ba1",
+    "data_criacao": "2025-12-24T02:29:07.653Z",
+    "data_decisao": "2025-12-24T02:29:12.997Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543355639-ylrjdpb4i",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "4bea6288-9876-44d6-b9d1-0e41d8c64673",
+    "data_criacao": "2025-12-24T02:29:15.639Z",
+    "data_decisao": "2025-12-24T02:29:16.449Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  },
+  {
+    "id": "1766543358729-zysact6g6",
+    "caso_uso": 1,
+    "dominio": "tecnologico",
+    "estado": "DECIDIDO",
+    "situacao_referenciada": "2fb6ff7d-e18d-45ab-9b9a-4cdc212040b8",
+    "data_criacao": "2025-12-24T02:29:18.729Z",
+    "data_decisao": "2025-12-24T02:29:19.225Z",
+    "data_observacao_iniciada": null,
+    "data_encerramento": null
+  }
+]

@@ -1,12 +1,12 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
 import {
   SituacaoDecisoria,
   EpisodioDecisao,
@@ -17,7 +17,7 @@ import {
   PerfilRisco,
   MemoryQuery,
   AnexoAnalise
-} from '../entidades/tipos';
+} from '../camada-3/entidades/tipos';
 
 const TEST_DATA_DIR = './test-data-' + Date.now();
 
@@ -107,7 +107,7 @@ function criarContratoValido(
     condicoes_obrigatorias: ['Condição 1'],
     observacao_minima_requerida: ['Impacto Técnico observado'],
     data_emissao: new Date(),
-    emitido_para: 'Bazari'
+    emitido_para: 'external'
   };
 }
 
@@ -461,7 +461,7 @@ describe('Incremento 1 - Persistência e Consulta da Memória', () => {
 
       expect(contrato).toBeDefined();
       expect(contrato.alternativa_autorizada).toBe('Alt 1');
-      expect(contrato.emitido_para).toBe('Bazari');
+      expect(contrato.emitido_para).toBe('external');
 
       // Verificar que episódio está DECIDIDO
       const episodioAtualizado = await episodioRepo.getById(episodio.id);

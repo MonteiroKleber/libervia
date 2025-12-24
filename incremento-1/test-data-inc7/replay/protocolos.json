@@ -1,0 +1,302 @@
+[
+  {
+    "id": "1766543343284-u2wxyt2gi",
+    "episodio_id": "1766543343115-gie15kgmw",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:03.284Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543343671-euzjkkgkl",
+    "episodio_id": "1766543343624-at30doggq",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:03.671Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543344107-i00xrjf2z",
+    "episodio_id": "1766543344017-vcgom1xys",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:04.107Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543344837-9b8rl6657",
+    "episodio_id": "1766543344697-o2acjp4p5",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:04.837Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543345527-nfrlh5a3f",
+    "episodio_id": "1766543345386-9i2jh59kl",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:05.527Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543346031-dokeklrig",
+    "episodio_id": "1766543345938-0bcs5kutl",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:06.031Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543346903-kqzvoqu28",
+    "episodio_id": "1766543346662-mybs74mk4",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:06.903Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543347869-olkksa3kl",
+    "episodio_id": "1766543347653-axd1mkvnk",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:07.869Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543356054-dvil03xc2",
+    "episodio_id": "1766543355639-ylrjdpb4i",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:16.054Z",
+    "validado_por": "Libervia"
+  },
+  {
+    "id": "1766543358947-snyed8iiv",
+    "episodio_id": "1766543358729-zysact6g6",
+    "criterios_minimos": [
+      "Criterio de viabilidade",
+      "Criterio de risco aceitavel",
+      "Criterio de alinhamento"
+    ],
+    "riscos_considerados": [
+      "Risco principal"
+    ],
+    "limites_definidos": [
+      {
+        "tipo": "tempo",
+        "descricao": "Prazo maximo",
+        "valor": "30 dias"
+      }
+    ],
+    "perfil_risco": "MODERADO",
+    "alternativas_avaliadas": [
+      "Alternativa 1",
+      "Alternativa 2"
+    ],
+    "alternativa_escolhida": "Alternativa 1",
+    "memoria_consultada_ids": [],
+    "anexos_utilizados_ids": [],
+    "estado": "VALIDADO",
+    "validado_em": "2025-12-24T02:29:18.947Z",
+    "validado_por": "Libervia"
+  }
+]

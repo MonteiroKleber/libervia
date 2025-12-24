@@ -9,12 +9,12 @@
  * 3. Unica saida = ContratoDeDecisao
  * 4. Nenhum vazamento de dados internos
  * 5. Nenhuma operacao de delete/update em decisoes/contratos
- * 6. Stress test reduzido (N=100)
+ * 6. Stress test reduzido (N=20)
  * 7. Replay deterministico pos-stress
+ *
+ * NOTA: Usa diretorios isolados por teste via createTestDataDir
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
 import {
   BazariAdapter,
   SituacaoInput,
@@ -23,26 +23,24 @@ import {
   ProtocoloRejeitadoError,
   createBazariAdapter
 } from '../integracoes/bazari/Adapter';
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
 import {
   DadosProtocoloInput,
   PerfilRisco,
-  ContratoDeDecisao,
-  EstadoProtocolo
-} from '../entidades/tipos';
+  ContratoDeDecisao
+} from '../camada-3/entidades/tipos';
+import { createTestDataDir, TestDataDir } from './helpers/testDataDir';
 
 // ════════════════════════════════════════════════════════════════════════════
 // FIXTURES
 // ════════════════════════════════════════════════════════════════════════════
-
-const TEST_DATA_DIR = './test-data-inc7';
 
 function criarSituacaoValida(index: number = 0): SituacaoInput {
   return {
@@ -106,7 +104,7 @@ function criarProtocoloInvalido(): DadosProtocoloInput {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// SETUP / TEARDOWN
+// SETUP HELPERS
 // ════════════════════════════════════════════════════════════════════════════
 
 async function criarOrquestradorCompleto(dataDir: string): Promise<{
@@ -147,13 +145,6 @@ async function criarOrquestradorCompleto(dataDir: string): Promise<{
   };
 }
 
-function limparDiretorio(dir: string): void {
-  if (fs.existsSync(dir)) {
-    fs.rmSync(dir, { recursive: true });
-  }
-  fs.mkdirSync(dir, { recursive: true });
-}
-
 // ════════════════════════════════════════════════════════════════════════════
 // TESTES
 // ════════════════════════════════════════════════════════════════════════════
@@ -163,20 +154,18 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
   describe('1. Fluxo Completo via Adapter', () => {
     let adapter: BazariAdapter;
     let orquestrador: OrquestradorCognitivo;
-    const testDir = path.join(TEST_DATA_DIR, 'fluxo-completo');
+    let testDir: TestDataDir;
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-fluxo');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       orquestrador = deps.orquestrador;
       await orquestrador.init();
       adapter = createBazariAdapter(orquestrador);
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test('solicitarDecisao retorna ContratoComMetadados', async () => {
@@ -234,28 +223,22 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
       expect(status.estado).toBe('DECIDIDO');
       expect(status.tem_contrato).toBe(true);
     });
-
-    test('consultarStatusDoContrato requer token quando configurado', async () => {
-      // Este teste sera feito na secao de Token
-    });
   });
 
   describe('2. Validacao de Token', () => {
     let adapter: BazariAdapter;
-    const testDir = path.join(TEST_DATA_DIR, 'token');
+    let testDir: TestDataDir;
     const TOKEN_SECRETO = 'token-secreto-teste';
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-token');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       await deps.orquestrador.init();
       adapter = createBazariAdapter(deps.orquestrador, TOKEN_SECRETO);
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test('Requisicao sem token falha quando token configurado', async () => {
@@ -306,19 +289,17 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
 
   describe('3. Protocolo Rejeitado', () => {
     let adapter: BazariAdapter;
-    const testDir = path.join(TEST_DATA_DIR, 'protocolo-rejeitado');
+    let testDir: TestDataDir;
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-protocolo');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       await deps.orquestrador.init();
       adapter = createBazariAdapter(deps.orquestrador);
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test('Protocolo invalido gera ProtocoloRejeitadoError', async () => {
@@ -346,19 +327,17 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
 
   describe('4. Sem Vazamento de Dados', () => {
     let adapter: BazariAdapter;
-    const testDir = path.join(TEST_DATA_DIR, 'vazamento');
+    let testDir: TestDataDir;
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-vazamento');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       await deps.orquestrador.init();
       adapter = createBazariAdapter(deps.orquestrador);
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test('Resultado nao contem campos internos do orquestrador', async () => {
@@ -404,11 +383,11 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
     let decisaoRepo: DecisaoRepositoryImpl;
     let contratoRepo: ContratoRepositoryImpl;
     let protocoloRepo: DecisionProtocolRepositoryImpl;
-    const testDir = path.join(TEST_DATA_DIR, 'imutabilidade');
+    let testDir: TestDataDir;
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-imutabilidade');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       await deps.orquestrador.init();
       situacaoRepo = deps.situacaoRepo;
       episodioRepo = deps.episodioRepo;
@@ -417,10 +396,8 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
       protocoloRepo = deps.protocoloRepo;
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test('DecisaoRepository nao possui metodo delete', () => {
@@ -455,21 +432,19 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
   describe('6. Stress Test Reduzido (N=20)', () => {
     let adapter: BazariAdapter;
     let eventLog: EventLogRepositoryImpl;
-    const testDir = path.join(TEST_DATA_DIR, 'stress');
+    let testDir: TestDataDir;
     const N = 20;
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-stress');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       await deps.orquestrador.init();
       adapter = createBazariAdapter(deps.orquestrador);
       eventLog = deps.eventLog;
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test(`Processar ${N} requisicoes com sucesso`, async () => {
@@ -515,12 +490,12 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
   describe('7. Replay Deterministico Pos-Stress', () => {
     let eventLog: EventLogRepositoryImpl;
     let adapter: BazariAdapter;
-    const testDir = path.join(TEST_DATA_DIR, 'replay');
+    let testDir: TestDataDir;
     const N = 10;
 
     beforeAll(async () => {
-      limparDiretorio(testDir);
-      const deps = await criarOrquestradorCompleto(testDir);
+      testDir = await createTestDataDir('inc7-replay');
+      const deps = await criarOrquestradorCompleto(testDir.dir);
       await deps.orquestrador.init();
       adapter = createBazariAdapter(deps.orquestrador);
       eventLog = deps.eventLog;
@@ -533,10 +508,8 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
       }
     });
 
-    afterAll(() => {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
-      }
+    afterAll(async () => {
+      await testDir.cleanup();
     });
 
     test('verifyChain retorna valid=true', async () => {
@@ -573,27 +546,19 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
 
   describe('8. Factory Function', () => {
     test('createBazariAdapter cria instancia corretamente', async () => {
-      const testDir = path.join(TEST_DATA_DIR, 'factory');
-      limparDiretorio(testDir);
+      const testDir = await createTestDataDir('inc7-factory');
 
-      const deps = await criarOrquestradorCompleto(testDir);
-      await deps.orquestrador.init();
+      try {
+        const deps = await criarOrquestradorCompleto(testDir.dir);
+        await deps.orquestrador.init();
 
-      const adapter = createBazariAdapter(deps.orquestrador, 'token-teste');
+        const adapter = createBazariAdapter(deps.orquestrador, 'token-teste');
 
-      expect(adapter).toBeInstanceOf(BazariAdapter);
-
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true });
+        expect(adapter).toBeInstanceOf(BazariAdapter);
+      } finally {
+        await testDir.cleanup();
       }
     });
   });
 
-});
-
-// Limpar diretorio de teste apos todos os testes
-afterAll(() => {
-  if (fs.existsSync(TEST_DATA_DIR)) {
-    fs.rmSync(TEST_DATA_DIR, { recursive: true });
-  }
 });

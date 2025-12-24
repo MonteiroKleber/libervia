@@ -12,7 +12,11 @@
     "backup-frio": "ts-node scripts/backup_frio_eventlog.ts",
     "control-plane:start": "ts-node control-plane/Server.ts",
     "dashboards:generate": "ts-node scripts/gerar_dashboard_eventlog.ts",
-    "bazari:load-test": "ts-node scripts/bazari_load_test.ts"
+    "bazari:load-test": "ts-node scripts/bazari_load_test.ts",
+    "drill:go-live": "ts-node scripts/drill_go_live.ts",
+    "operacao:metrics": "ts-node scripts/operacao_metrics.ts",
+    "backup:secure": "ts-node scripts/backup_frio_secure.ts",
+    "crypto:generate-keys": "ts-node scripts/crypto_utils.ts generate"
   },
   "keywords": [
     "libervia",
@@ -30,5 +34,10 @@
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "fastify": "^5.6.2",
+    "fastify-plugin": "^5.1.0"
   }
 }

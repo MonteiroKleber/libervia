@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-12-24T02:27:12.047Z",
+  "data_dir": "./data",
+  "eventlog": {
+    "total_eventos": 0,
+    "total_segmentos": 0,
+    "chain_valid": true
+  },
+  "drill": {},
+  "backup": {},
+  "alertas": [],
+  "status_geral": "OK"
+}

@@ -1,11 +1,11 @@
 import * as fs from 'fs/promises';
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
 import {
   SituacaoDecisoria,
   DecisionProtocol,
@@ -15,7 +15,7 @@ import {
   EstadoProtocolo,
   PerfilRisco,
   Limite
-} from '../entidades/tipos';
+} from '../camada-3/entidades/tipos';
 
 const TEST_DATA_DIR = './test-data-inc3-' + Date.now();
 
@@ -315,7 +315,7 @@ describe('Incremento 3 - Protocolo Formal de Decisão', () => {
       // 4. Verificar resultados
       expect(contrato).toBeDefined();
       expect(contrato.alternativa_autorizada).toBe('Alt 1');
-      expect(contrato.emitido_para).toBe('Bazari');
+      expect(contrato.emitido_para).toBe('external');
 
       // Verificar que protocolo foi persistido
       const protocoloPersistido = await protocoloRepo.getByEpisodioId(episodio.id);

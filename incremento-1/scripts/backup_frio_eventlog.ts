@@ -24,7 +24,7 @@ import * as crypto from 'crypto';
 import * as archiver from 'archiver';
 
 // Imports do projeto
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
 
 // ════════════════════════════════════════════════════════════════════════
 // TIPOS

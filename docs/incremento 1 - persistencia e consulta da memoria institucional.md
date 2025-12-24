@@ -2760,4 +2760,122 @@ Checklist de garantias documentado em:
 
 ---
 
-Aguardando instrução para próximo incremento.
+## 8. Incremento 8: Preparação Go-Live
+
+**Status**: Em Implementação
+**Data**: 2025-12-23
+**Fase**: Validação Pré-Produção
+
+### 8.1 Objetivo
+
+Validar a prontidão para produção do Cérebro Institucional através de:
+1. Cenários de caos e failover
+2. Drill automatizado de desastre
+3. Verificação final de garantias
+4. Checklist de go-live
+
+### 8.2 Cenários de Caos
+
+| # | Cenário | Descrição | Criticidade |
+|---|---------|-----------|-------------|
+| 1 | Corrupção de segmento | Corromper arquivo de segmento do EventLog | Alta |
+| 2 | Perda de segmento | Remover segmento intermediário | Alta |
+| 3 | Corrupção de snapshot | Corromper event-log-snapshot.json | Média |
+| 4 | Requisições simultâneas | N chamadas paralelas ao adapter | Média |
+| 5 | Restart inesperado | Reiniciar repositórios durante operação | Média |
+| 6 | Disco cheio simulado | Falha de escrita durante append | Baixa |
+| 7 | Restauração de backup | Restaurar backup frio e validar | Alta |
+
+### 8.3 Drill Go-Live
+
+```bash
+# Executar drill completo
+npm run drill:go-live [N_EPISODIOS] [OUTPUT_DIR]
+
+# Exemplo
+npm run drill:go-live 50 ./test-artifacts/go-live
+```
+
+**Saída**:
+```
+./test-artifacts/go-live/<timestamp>/
+├── drill-result.json       # Resultado consolidado
+├── logs/
+│   ├── scenario-1.log
+│   └── ...
+└── metrics/
+    ├── timing.json
+    └── summary.md
+```
+
+### 8.4 Garantias Verificadas
+
+| Garantia | Verificação |
+|----------|-------------|
+| Sem delete/update | Repositórios sem métodos proibidos |
+| Replay determinístico | Dois replays consecutivos idênticos |
+| Adapter funcional | Contrato emitido após cenários |
+| Chain válida | `verifyChain()` = true |
+
+### 8.5 Critérios Go-Live
+
+#### Obrigatórios
+
+| Critério | Verificação |
+|----------|-------------|
+| Todos os testes passam | `npm test` = 0 falhas |
+| Drill passa | Todos cenários OK |
+| Chain válida | `verifyChain()` = true |
+| Replay determinístico | Comparação OK |
+| Backup funcional | Restauração OK |
+| Adapter funcional | Contrato emitido |
+
+#### Recomendados
+
+| Critério | Verificação |
+|----------|-------------|
+| Cobertura > 60% | `npm run test:coverage` |
+| Load test N=1000 OK | `npm run bazari:load-test 1000` |
+
+### 8.6 Testes Automatizados
+
+17 testes cobrindo:
+- Garantias fundamentais (4 testes)
+- Cenários de caos (4 testes)
+- Backup e restauração (3 testes)
+- Validação pré-produção (4 testes)
+- Critérios go-live (2 testes)
+
+### 8.7 Runbooks
+
+- `docs/runbooks/checklist_go_live.md` - Checklist completo
+- `docs/runbooks/garantias_integracao_bazari.md` - Garantias de integração
+- `docs/runbooks/desastre_backup_frio.md` - Procedimento de restauração
+
+### 8.8 Estrutura de Arquivos
+
+```
+incremento-1/
+├── scripts/
+│   ├── drill_go_live.ts       # Script de drill
+│   ├── bazari_load_test.ts    # Load test
+│   └── backup_frio_eventlog.ts # Backup
+├── testes/
+│   ├── incremento8.test.ts    # 17 testes
+│   └── incremento7.test.ts    # 28 testes
+└── integracoes/
+    └── bazari/
+        └── Adapter.ts         # Interface Bazari
+```
+
+---
+
+## Conclusão
+
+O Cérebro Institucional está pronto para produção após:
+1. Validação completa de garantias fundamentais
+2. Cenários de caos executados com sucesso
+3. Backup e restauração funcionais
+4. Interface controlada com Bazari operacional
+
+Aguardando aprovação final para go-live.

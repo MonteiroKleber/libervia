@@ -1,9 +1,9 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
 import {
   EpisodioDecisao,
   DecisaoInstitucional,
@@ -11,7 +11,7 @@ import {
   EstadoEpisodio,
   PerfilRisco,
   MemoryQuery
-} from '../entidades/tipos';
+} from '../camada-3/entidades/tipos';
 
 const TEST_DATA_DIR = './test-data-inc2-' + Date.now();
 
@@ -84,7 +84,7 @@ function criarContratoValido(
     condicoes_obrigatorias: ['Condição 1'],
     observacao_minima_requerida: ['Impacto observado'],
     data_emissao: new Date(),
-    emitido_para: 'Bazari'
+    emitido_para: 'external'
   };
 }
 

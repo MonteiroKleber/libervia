@@ -20,15 +20,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BazariAdapter, SituacaoInput, ContratoComMetadados, ProtocoloRejeitadoError } from '../integracoes/bazari/Adapter';
-import { OrquestradorCognitivo } from '../orquestrador/OrquestradorCognitivo';
-import { SituacaoRepositoryImpl } from '../repositorios/implementacao/SituacaoRepositoryImpl';
-import { EpisodioRepositoryImpl } from '../repositorios/implementacao/EpisodioRepositoryImpl';
-import { DecisaoRepositoryImpl } from '../repositorios/implementacao/DecisaoRepositoryImpl';
-import { ContratoRepositoryImpl } from '../repositorios/implementacao/ContratoRepositoryImpl';
-import { DecisionProtocolRepositoryImpl } from '../repositorios/implementacao/DecisionProtocolRepositoryImpl';
-import { MemoryQueryService } from '../servicos/MemoryQueryService';
-import { EventLogRepositoryImpl } from '../event-log/EventLogRepositoryImpl';
-import { DadosProtocoloInput, PerfilRisco, ContratoDeDecisao } from '../entidades/tipos';
+import { OrquestradorCognitivo } from '../camada-3/orquestrador/OrquestradorCognitivo';
+import { SituacaoRepositoryImpl } from '../camada-3/repositorios/implementacao/SituacaoRepositoryImpl';
+import { EpisodioRepositoryImpl } from '../camada-3/repositorios/implementacao/EpisodioRepositoryImpl';
+import { DecisaoRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisaoRepositoryImpl';
+import { ContratoRepositoryImpl } from '../camada-3/repositorios/implementacao/ContratoRepositoryImpl';
+import { DecisionProtocolRepositoryImpl } from '../camada-3/repositorios/implementacao/DecisionProtocolRepositoryImpl';
+import { MemoryQueryService } from '../camada-3/servicos/MemoryQueryService';
+import { EventLogRepositoryImpl } from '../camada-3/event-log/EventLogRepositoryImpl';
+import { DadosProtocoloInput, PerfilRisco, ContratoDeDecisao } from '../camada-3/entidades/tipos';
 
 // ════════════════════════════════════════════════════════════════════════════
 // CONFIGURACAO

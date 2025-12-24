@@ -10,7 +10,7 @@ import {
   ReplayOptions,
   ReplayResult
 } from '../event-log/EventLogRepository';
-import { TipoEvento, TipoEntidade, ChainVerificationResult } from '../event-log/EventLogEntry';
+import { ActorId, TipoEvento, TipoEntidade, ChainVerificationResult } from '../event-log/EventLogEntry';
 import { MemoryQueryService } from '../servicos/MemoryQueryService';
 import {
   SituacaoDecisoria,
@@ -54,8 +54,8 @@ const MAX_ERROR_BUFFER = 20;
  * PRINCÍPIOS:
  * - NÃO recomenda decisões
  * - NÃO otimiza resultados
- * - NÃO executa ações (isso é Bazari)
- * - ÚNICA saída para Bazari: ContratoDeDecisao
+ * - NÃO executa ações (isso é responsabilidade do sistema externo/integração)
+ * - ÚNICA saída para sistemas externos: ContratoDeDecisao
  *
  * INCREMENTO 3: Novo fluxo formal
  * Situação → Episódio → Protocolo → Decisão → Contrato
@@ -270,7 +270,7 @@ class OrquestradorCognitivo {
     entidade: string,
     entidadeId: string,
     payload: unknown,
-    actor: 'Libervia' | 'Bazari' = 'Libervia'
+    actor: ActorId = 'Libervia'
   ): Promise<void> {
     if (!this.eventLog) return;
 
@@ -302,7 +302,12 @@ class OrquestradorCognitivo {
    * 4. Transiciona para ACEITA e cria episódio
    * 5. Transiciona para EM_ANALISE
    */
-  async ProcessarSolicitacao(situacao: SituacaoDecisoria): Promise<EpisodioDecisao> {
+  async ProcessarSolicitacao(
+    situacao: SituacaoDecisoria,
+    options?: { actor?: string }
+  ): Promise<EpisodioDecisao> {
+    const actor = options?.actor ?? 'external';
+
     // Verificar se situação existe
     let sit = await this.situacaoRepo.getById(situacao.id);
 
@@ -317,7 +322,7 @@ class OrquestradorCognitivo {
         TipoEntidade.SITUACAO,
         situacao.id,
         situacao,
-        'Bazari' // Bazari solicita a criação
+        actor // Sistema externo solicita a criação
       );
     }
 
@@ -616,11 +621,12 @@ class OrquestradorCognitivo {
    *
    * INCREMENTO 3: Agora REQUER protocolo VALIDADO
    *
-   * RETORNA ContratoDeDecisao (única saída para Bazari)
+   * RETORNA ContratoDeDecisao (única saída para o sistema chamador)
    */
   async RegistrarDecisao(
     episodio_id: string,
-    decisaoInput: Omit<DecisaoInstitucional, 'id' | 'episodio_id' | 'data_decisao'>
+    decisaoInput: Omit<DecisaoInstitucional, 'id' | 'episodio_id' | 'data_decisao'>,
+    options?: { emitidoPara?: string }
   ): Promise<ContratoDeDecisao> {
     const episodio = await this.episodioRepo.getById(episodio_id);
 
@@ -718,15 +724,17 @@ class OrquestradorCognitivo {
       { status_anterior: StatusSituacao.EM_ANALISE, status_novo: StatusSituacao.DECIDIDA }
     );
 
-    // Emitir contrato (ÚNICA saída para Bazari)
-    const contrato = await this.EmitirContrato(episodio_id, decisao);
+    // Emitir contrato (única saída para o sistema externo)
+    const emitidoPara = options?.emitidoPara ?? 'external';
+    const contrato = await this.EmitirContrato(episodio_id, decisao, emitidoPara);
 
     return contrato;
   }
 
   private async EmitirContrato(
     episodio_id: string,
-    decisao: DecisaoInstitucional
+    decisao: DecisaoInstitucional,
+    emitidoPara: string = 'external'
   ): Promise<ContratoDeDecisao> {
     const contrato: ContratoDeDecisao = {
       id: this.gerarId(),
@@ -742,7 +750,7 @@ class OrquestradorCognitivo {
         'Persistência avaliada'
       ],
       data_emissao: new Date(), // Orquestrador é fonte da data
-      emitido_para: 'Bazari'
+      emitido_para: emitidoPara
     };
 
     await this.contratoRepo.create(contrato);

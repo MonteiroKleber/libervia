@@ -28,8 +28,8 @@ import {
   Alternativa,
   Risco,
   Limite
-} from '../../entidades/tipos';
-import { OrquestradorCognitivo } from '../../orquestrador/OrquestradorCognitivo';
+} from '../../camada-3/entidades/tipos';
+import { OrquestradorCognitivo } from '../../camada-3/orquestrador/OrquestradorCognitivo';
 
 // ════════════════════════════════════════════════════════════════════════════
 // TIPOS PUBLICOS DO ADAPTER
@@ -247,7 +247,7 @@ export class BazariAdapter {
     const situacao = this.criarSituacaoInterna(situacaoData);
 
     // 3. Processar solicitacao (cria episodio)
-    const episodio = await this.orquestrador.ProcessarSolicitacao(situacao);
+    const episodio = await this.orquestrador.ProcessarSolicitacao(situacao, { actor: 'Bazari' });
 
     // 4. Construir e validar protocolo
     const protocolo = await this.orquestrador.ConstruirProtocoloDeDecisao(
@@ -273,7 +273,8 @@ export class BazariAdapter {
         perfil_risco: protocolo.perfil_risco,
         limites: protocolo.limites_definidos,
         condicoes: [] // Condicoes sao definidas pelo Orquestrador no contrato
-      }
+      },
+      { emitidoPara: 'Bazari' }
     );
 
     // 7. Retornar APENAS contrato com metadados

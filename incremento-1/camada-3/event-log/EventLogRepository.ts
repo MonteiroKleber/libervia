@@ -2,7 +2,7 @@
 // INCREMENTO 4: INTERFACE DO REPOSITÓRIO DE EVENT-LOG
 // ════════════════════════════════════════════════════════════════════════
 
-import { EventLogEntry, ChainVerificationResult } from './EventLogEntry';
+import { ActorId, EventLogEntry, ChainVerificationResult } from './EventLogEntry';
 
 // ════════════════════════════════════════════════════════════════════════
 // INCREMENTO 4.3: TIPOS PARA AUDITORIA OPERACIONAL
@@ -109,7 +109,7 @@ interface EventLogRepository {
    * @returns O evento criado com hashes calculados
    */
   append(
-    actor: 'Libervia' | 'Bazari',
+    actor: ActorId,
     evento: string,
     entidade: string,
     entidadeId: string,
