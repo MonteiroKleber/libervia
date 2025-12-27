@@ -23,6 +23,9 @@ import { getAuthPepper } from '../tenant/TenantSecurity';
 import { healthRoutes } from './routes/healthRoutes';
 import { adminRoutes } from './routes/adminRoutes';
 import { publicRoutes } from './routes/publicRoutes';
+import { queryRoutes } from './routes/queryRoutes';
+import fastifyStatic from '@fastify/static';
+import * as path from 'path';
 
 // ════════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -126,6 +129,20 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   // Admin API
   await app.register(adminRoutes, { prefix: '/admin' });
+
+  // Query APIs (Inc 21 - Painel Operacional)
+  await app.register(queryRoutes, { prefix: '/admin/query' });
+
+  // Admin UI static files (Inc 21)
+  await app.register(fastifyStatic, {
+    root: path.join(__dirname, 'ui'),
+    prefix: '/admin/ui/'
+  });
+
+  // Rota para servir index.html do Admin UI (redirect para /admin/ui/)
+  app.get('/admin/ui', async (request, reply) => {
+    return reply.redirect('/admin/ui/');
+  });
 
   // Public API
   await app.register(publicRoutes, { prefix: '/api/v1' });

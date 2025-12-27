@@ -83,15 +83,25 @@ function extractBearerToken(authorization: string | undefined): string | null {
 }
 
 /**
- * Extrai tenantId do path /admin/tenants/:id/...
+ * Extrai tenantId do path /admin/tenants/:id/... ou /admin/query/:tenantId/...
  */
 function extractTenantIdFromAdminPath(url: string): string | null {
-  const match = url.match(/^\/admin\/tenants\/([^/]+)/);
-  if (match && match[1]) {
-    // Nao retornar para rotas que nao sao por-tenant
-    // Ex: /admin/tenants (sem id)
-    return match[1];
+  // /admin/tenants/:id/...
+  const tenantsMatch = url.match(/^\/admin\/tenants\/([^/]+)/);
+  if (tenantsMatch && tenantsMatch[1]) {
+    return tenantsMatch[1];
   }
+
+  // /admin/query/:tenantId/... (Query APIs)
+  const queryMatch = url.match(/^\/admin\/query\/([^/]+)/);
+  if (queryMatch && queryMatch[1]) {
+    // Nao retornar para rotas globais
+    const globalRoutes = ['tenants', 'instances', 'metrics', 'eventlog'];
+    if (!globalRoutes.includes(queryMatch[1])) {
+      return queryMatch[1];
+    }
+  }
+
   return null;
 }
 
@@ -114,6 +124,14 @@ function isGlobalAdminRoute(url: string, method: string): boolean {
       url === '/admin/instances' ||
       url === '/admin/health' ||
       url === '/admin/shutdown') {
+    return true;
+  }
+
+  // Query APIs globais (Inc 21)
+  if (url === '/admin/query/tenants' ||
+      url === '/admin/query/instances' ||
+      url === '/admin/query/metrics' ||
+      url.startsWith('/admin/query/eventlog')) {
     return true;
   }
 
@@ -193,9 +211,14 @@ const authPluginImpl: FastifyPluginAsync<AuthPluginOptions> = async (app, opts) 
     const method = request.method;
 
     // ══════════════════════════════════════════════════════════════════════════
-    // SKIP: Health e Metrics publicos
+    // SKIP: Health, Metrics e Admin UI (arquivos estáticos) publicos
     // ══════════════════════════════════════════════════════════════════════════
     if (url.startsWith('/health') || url === '/metrics') {
+      return;
+    }
+
+    // Admin UI é público (a autenticação é feita via JS no frontend)
+    if (url.startsWith('/admin/ui')) {
       return;
     }
 

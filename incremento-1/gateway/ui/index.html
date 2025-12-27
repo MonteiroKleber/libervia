@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Operacional</title>
+  <link rel="stylesheet" href="/admin/ui/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen">
+      <div class="auth-container">
+        <h1>Painel Operacional</h1>
+        <p class="subtitle">Sistema de Governanca Institucional</p>
+        <div class="form-group">
+          <label for="auth-token">Token de Acesso</label>
+          <input type="password" id="auth-token" placeholder="Cole seu token aqui...">
+        </div>
+        <button id="btn-login" class="btn btn-primary">Entrar</button>
+        <p id="auth-error" class="error-message"></p>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="screen hidden">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1>Painel Operacional</h1>
+          <span id="role-badge" class="badge"></span>
+        </div>
+        <div class="header-right">
+          <select id="tenant-selector" class="tenant-select hidden">
+            <option value="">Selecionar Tenant...</option>
+          </select>
+          <span id="current-tenant" class="current-tenant"></span>
+          <button id="btn-logout" class="btn btn-secondary">Sair</button>
+        </div>
+      </header>
+
+      <!-- Navigation -->
+      <nav class="nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="reviews">Reviews</button>
+        <button class="nav-btn" data-view="mandates">Mandatos</button>
+        <button class="nav-btn" data-view="consequences">Consequencias</button>
+        <button class="nav-btn" data-view="timeline">Timeline</button>
+        <button class="nav-btn global-only" data-view="eventlog">EventLog</button>
+      </nav>
+
+      <!-- Content Area -->
+      <main id="content" class="content">
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="view">
+          <h2>Dashboard</h2>
+          <div id="dashboard-cards" class="cards-grid">
+            <!-- Cards populated by JS -->
+          </div>
+          <div class="section">
+            <h3>Eventos Recentes</h3>
+            <div id="recent-events" class="events-list">
+              <!-- Events populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews View -->
+        <div id="view-reviews" class="view hidden">
+          <h2>Casos de Revisao Humana</h2>
+          <div class="filters">
+            <select id="review-status-filter">
+              <option value="">Todos os Status</option>
+              <option value="OPEN">Abertos</option>
+              <option value="RESOLVED">Resolvidos</option>
+              <option value="DISMISSED">Dispensados</option>
+            </select>
+            <button id="btn-refresh-reviews" class="btn btn-secondary">Atualizar</button>
+          </div>
+          <div id="reviews-list" class="data-list">
+            <!-- Reviews populated by JS -->
+          </div>
+          <div id="review-detail" class="detail-panel hidden">
+            <!-- Detail populated by JS -->
+          </div>
+        </div>
+
+        <!-- Mandates View -->
+        <div id="view-mandates" class="view hidden">
+          <h2>Mandatos de Autonomia</h2>
+          <div class="filters">
+            <select id="mandate-status-filter">
+              <option value="">Todos os Status</option>
+              <option value="active">Ativos</option>
+              <option value="suspended">Suspensos</option>
+              <option value="revoked">Revogados</option>
+              <option value="expired">Expirados</option>
+            </select>
+            <button id="btn-refresh-mandates" class="btn btn-secondary">Atualizar</button>
+          </div>
+          <div id="mandates-list" class="data-list">
+            <!-- Mandates populated by JS -->
+          </div>
+          <div id="mandate-detail" class="detail-panel hidden">
+            <!-- Detail populated by JS -->
+          </div>
+        </div>
+
+        <!-- Consequences View -->
+        <div id="view-consequences" class="view hidden">
+          <h2>Consequencias</h2>
+          <div class="filters">
+            <input type="text" id="consequence-contrato-filter" placeholder="Filtrar por contratoId...">
+            <button id="btn-refresh-consequences" class="btn btn-secondary">Atualizar</button>
+          </div>
+          <div id="consequences-list" class="data-list">
+            <!-- Consequences populated by JS -->
+          </div>
+          <div id="consequence-detail" class="detail-panel hidden">
+            <!-- Detail populated by JS -->
+          </div>
+        </div>
+
+        <!-- Timeline View -->
+        <div id="view-timeline" class="view hidden">
+          <h2>Timeline (Episodio / Contrato)</h2>
+          <div class="search-box">
+            <input type="text" id="timeline-search" placeholder="Digite episodioId ou contratoId...">
+            <select id="timeline-type">
+              <option value="episode">Episodio</option>
+              <option value="contract">Contrato</option>
+            </select>
+            <button id="btn-search-timeline" class="btn btn-primary">Buscar</button>
+          </div>
+          <div id="timeline-result" class="timeline-container">
+            <!-- Timeline populated by JS -->
+          </div>
+        </div>
+
+        <!-- EventLog View (global_admin only) -->
+        <div id="view-eventlog" class="view hidden">
+          <h2>EventLog Global</h2>
+          <div class="filters">
+            <input type="text" id="eventlog-tenant-filter" placeholder="Filtrar por tenantId...">
+            <input type="text" id="eventlog-type-filter" placeholder="Filtrar por eventType...">
+            <button id="btn-refresh-eventlog" class="btn btn-secondary">Atualizar</button>
+          </div>
+          <div id="eventlog-list" class="data-list">
+            <!-- Events populated by JS -->
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <span>Sistema de Governanca Institucional</span>
+        <span id="request-id" class="request-id"></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/admin/ui/app.js"></script>
+</body>
+</html>
