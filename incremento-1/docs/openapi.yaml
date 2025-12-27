@@ -1,0 +1,2149 @@
+openapi: 3.0.3
+info:
+  title: Libervia API
+  description: |
+    API do Libervia - Cérebro Institucional para Governança de Decisões.
+
+    ## Autenticação
+
+    Todas as rotas (exceto health) requerem autenticação via Bearer token.
+
+    - **global_admin**: Token do administrador global (GATEWAY_ADMIN_TOKEN)
+    - **tenant_admin**: Token de administrador do tenant (criado via /admin/tenants/:id/keys)
+    - **public**: Token público do tenant (para APIs cognitivas)
+
+    ## Identificação de Tenant
+
+    Rotas `/api/v1/*` requerem identificação do tenant via:
+    - Header `X-Tenant-Id` (preferido)
+    - Path parameter em rotas tenant-scoped
+
+    **IMPORTANTE**: Se o tenant do path conflitar com o tenant do token,
+    retorna erro 400 TENANT_CONFLICT.
+
+    ## Request ID
+
+    Toda resposta inclui header `X-Request-Id` para rastreabilidade.
+    Você pode enviar seu próprio `X-Request-Id` no request.
+
+  version: 1.0.0
+  contact:
+    name: Bazari
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Health
+    description: Health checks e métricas do sistema
+  - name: Admin - Tenants
+    description: Gerenciamento de tenants (requer global_admin)
+  - name: Admin - Keys
+    description: Gerenciamento de chaves de autenticação (requer tenant_admin ou global_admin)
+  - name: Admin - Audit
+    description: Operações de auditoria do EventLog (requer tenant_admin ou global_admin)
+  - name: Admin - Metrics
+    description: Métricas e monitoramento (requer global_admin)
+  - name: Query
+    description: APIs de consulta do Painel Operacional
+  - name: Public - Decisões
+    description: APIs cognitivas para decisões (requer public ou superior)
+
+# ════════════════════════════════════════════════════════════════════════════════
+# SECURITY
+# ════════════════════════════════════════════════════════════════════════════════
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Token de autenticação (global_admin, tenant_admin ou public)
+
+  parameters:
+    TenantId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: ID do tenant
+
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: false
+      schema:
+        type: string
+      description: ID do tenant (obrigatório para rotas /api/v1/*)
+
+    XRequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      schema:
+        type: string
+      description: ID de rastreabilidade (gerado automaticamente se não fornecido)
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 50
+        maximum: 200
+      description: Número máximo de resultados
+
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+      description: Offset para paginação
+
+  headers:
+    X-Request-Id:
+      description: ID de rastreabilidade da requisição
+      schema:
+        type: string
+
+  schemas:
+    # ══════════════════════════════════════════════════════════════════════════
+    # ERROR SCHEMAS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Código do erro
+        code:
+          type: string
+          description: Código estruturado do erro
+        message:
+          type: string
+          description: Mensagem descritiva
+
+    UnauthorizedError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      example:
+        error: Unauthorized
+        code: MISSING_TOKEN
+        message: Missing Authorization header
+
+    ForbiddenError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      example:
+        error: Forbidden
+        code: INSUFFICIENT_ROLE
+        message: This operation requires global_admin role
+
+    TenantConflictError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      example:
+        error: Bad Request
+        code: TENANT_CONFLICT
+        message: Tenant in path does not match tenant in token
+
+    NotFoundError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+      example:
+        error: NOT_FOUND
+        message: Tenant not found
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # HEALTH SCHEMAS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - uptime
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, error]
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: integer
+          description: Uptime em milissegundos
+
+    ReadinessResponse:
+      allOf:
+        - $ref: '#/components/schemas/HealthResponse'
+      type: object
+      properties:
+        registry:
+          type: object
+          properties:
+            loaded:
+              type: boolean
+            tenantCount:
+              type: integer
+        runtime:
+          type: object
+          properties:
+            activeInstances:
+              type: integer
+
+    MetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: integer
+        memory:
+          type: object
+          properties:
+            heapUsed:
+              type: integer
+            heapTotal:
+              type: integer
+            external:
+              type: integer
+            rss:
+              type: integer
+        tenants:
+          type: object
+          properties:
+            registered:
+              type: integer
+            active:
+              type: integer
+            suspended:
+              type: integer
+        instances:
+          type: object
+          properties:
+            active:
+              type: integer
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # TENANT SCHEMAS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    TenantRegistrationInput:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          minLength: 2
+          maxLength: 64
+          description: ID único do tenant (lowercase, alfanumérico com hífens)
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        apiToken:
+          type: string
+          description: Token de API (gerado automaticamente se não fornecido)
+
+    TenantUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended]
+
+    TenantConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, deleted]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        apiToken:
+          type: string
+          description: Token de API (retornado apenas na criação)
+
+    TenantList:
+      type: object
+      properties:
+        tenants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantConfig'
+        total:
+          type: integer
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # KEY SCHEMAS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    CreateKeyInput:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [public, tenant_admin]
+        description:
+          type: string
+
+    KeyCreatedResponse:
+      type: object
+      properties:
+        keyId:
+          type: string
+        role:
+          type: string
+        token:
+          type: string
+          description: Token (retornado APENAS UMA VEZ)
+        createdAt:
+          type: string
+          format: date-time
+        warning:
+          type: string
+
+    KeyInfo:
+      type: object
+      properties:
+        keyId:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          enum: [active, revoked]
+        createdAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+
+    KeyListResponse:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyInfo'
+        count:
+          type: integer
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # AUDIT SCHEMAS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    AuditVerifyResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        totalEvents:
+          type: integer
+        verifiedAt:
+          type: string
+          format: date-time
+        errors:
+          type: array
+          items:
+            type: string
+
+    EventLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        evento:
+          type: string
+        entidade:
+          type: string
+        entidade_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        payload:
+          type: object
+
+    EventListResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventLogEntry'
+        count:
+          type: integer
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # QUERY SCHEMAS (Inc 21)
+    # ══════════════════════════════════════════════════════════════════════════
+
+    QueryTenantsResponse:
+      type: object
+      properties:
+        tenants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              status:
+                type: string
+              createdAt:
+                type: string
+        total:
+          type: integer
+
+    QueryInstancesResponse:
+      type: object
+      properties:
+        instances:
+          type: array
+          items:
+            type: object
+            properties:
+              tenantId:
+                type: string
+              startedAt:
+                type: string
+              uptime:
+                type: integer
+              lastActivity:
+                type: string
+        total:
+          type: integer
+
+    QueryMetricsResponse:
+      type: object
+      properties:
+        totalTenants:
+          type: integer
+        activeTenants:
+          type: integer
+        suspendedTenants:
+          type: integer
+        activeInstances:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    QueryEventLogResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventLogEntry'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    MandateInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        agentId:
+          type: string
+        scope:
+          type: object
+        constraints:
+          type: object
+        status:
+          type: string
+          enum: [active, suspended, revoked]
+        createdAt:
+          type: string
+          format: date-time
+
+    QueryMandatesResponse:
+      type: object
+      properties:
+        mandates:
+          type: array
+          items:
+            $ref: '#/components/schemas/MandateInfo'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ReviewCaseInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, RESOLVED, DISMISSED]
+        createdAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+
+    QueryReviewsResponse:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewCaseInfo'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ObservacaoInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        episodioId:
+          type: string
+        tipo:
+          type: string
+        descricao:
+          type: string
+        dataRegistro:
+          type: string
+          format: date-time
+
+    QueryConsequencesResponse:
+      type: object
+      properties:
+        consequences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObservacaoInfo'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    DashboardResponse:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        tenant:
+          type: object
+          properties:
+            name:
+              type: string
+            status:
+              type: string
+        mandates:
+          type: object
+          properties:
+            active:
+              type: integer
+            suspended:
+              type: integer
+            total:
+              type: integer
+        reviews:
+          type: object
+          properties:
+            OPEN:
+              type: integer
+            RESOLVED:
+              type: integer
+            DISMISSED:
+              type: integer
+        consequences:
+          type: object
+          properties:
+            total:
+              type: integer
+        recentEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              evento:
+                type: string
+              entidade:
+                type: string
+              ts:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PUBLIC API SCHEMAS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    Alternativa:
+      type: object
+      required:
+        - descricao
+        - riscos_associados
+      properties:
+        descricao:
+          type: string
+        riscos_associados:
+          type: array
+          items:
+            type: string
+
+    Risco:
+      type: object
+      required:
+        - descricao
+        - tipo
+        - reversibilidade
+      properties:
+        descricao:
+          type: string
+        tipo:
+          type: string
+        reversibilidade:
+          type: string
+
+    Limite:
+      type: object
+      required:
+        - tipo
+        - valor
+        - descricao
+      properties:
+        tipo:
+          type: string
+        valor:
+          type: string
+        descricao:
+          type: string
+
+    SituacaoInput:
+      type: object
+      required:
+        - dominio
+        - contexto
+        - objetivo
+        - incertezas
+        - alternativas
+        - riscos
+        - urgencia
+        - capacidade_absorcao
+        - consequencia_relevante
+        - possibilidade_aprendizado
+        - caso_uso_declarado
+      properties:
+        dominio:
+          type: string
+        contexto:
+          type: string
+        objetivo:
+          type: string
+        incertezas:
+          type: array
+          items:
+            type: string
+        alternativas:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alternativa'
+        riscos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Risco'
+        urgencia:
+          type: string
+        capacidade_absorcao:
+          type: string
+        consequencia_relevante:
+          type: string
+        possibilidade_aprendizado:
+          type: boolean
+        caso_uso_declarado:
+          type: integer
+
+    ProtocoloInput:
+      type: object
+      required:
+        - criterios_minimos
+        - riscos_considerados
+        - limites_definidos
+        - perfil_risco
+        - alternativas_avaliadas
+        - alternativa_escolhida
+      properties:
+        criterios_minimos:
+          type: array
+          items:
+            type: string
+        riscos_considerados:
+          type: array
+          items:
+            type: string
+        limites_definidos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Limite'
+        perfil_risco:
+          type: string
+          enum: [conservador, moderado, arrojado]
+        alternativas_avaliadas:
+          type: array
+          items:
+            type: string
+        alternativa_escolhida:
+          type: string
+        memoria_consultada_ids:
+          type: array
+          items:
+            type: string
+
+    DecisaoInput:
+      type: object
+      required:
+        - situacao
+        - protocolo
+      properties:
+        situacao:
+          $ref: '#/components/schemas/SituacaoInput'
+        protocolo:
+          $ref: '#/components/schemas/ProtocoloInput'
+
+    ContratoDeDecisao:
+      type: object
+      properties:
+        id:
+          type: string
+        episodio_id:
+          type: string
+        alternativa_escolhida:
+          type: string
+        criterios:
+          type: array
+          items:
+            type: string
+        perfil_risco:
+          type: string
+        limites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Limite'
+        emitido_em:
+          type: string
+          format: date-time
+        emitido_para:
+          type: string
+
+    DecisaoResponse:
+      type: object
+      properties:
+        contrato:
+          $ref: '#/components/schemas/ContratoDeDecisao'
+        episodio_id:
+          type: string
+        metadados:
+          type: object
+          properties:
+            tenant_id:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    EpisodioStatusResponse:
+      type: object
+      properties:
+        episodio_id:
+          type: string
+        ultimo_evento:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        total_eventos:
+          type: integer
+        tem_contrato:
+          type: boolean
+
+    EventosQueryResponse:
+      type: object
+      properties:
+        eventos:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              evento:
+                type: string
+              entidade:
+                type: string
+              entidade_id:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              actor:
+                type: string
+        total:
+          type: integer
+        limit:
+          type: integer
+
+    EventLogStatusResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        degraded:
+          type: boolean
+        errorCount:
+          type: integer
+        lastErrorAt:
+          type: string
+          format: date-time
+        lastErrorMsg:
+          type: string
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Token de autenticação ausente ou inválido
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+
+    Forbidden:
+      description: Permissão insuficiente para a operação
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+
+    TenantConflict:
+      description: Conflito entre tenant do path e tenant do token
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TenantConflictError'
+
+    NotFound:
+      description: Recurso não encontrado
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/X-Request-Id'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+
+# ════════════════════════════════════════════════════════════════════════════════
+# PATHS
+# ════════════════════════════════════════════════════════════════════════════════
+
+paths:
+  # ══════════════════════════════════════════════════════════════════════════
+  # HEALTH ROUTES
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: Retorna 200 se o servidor está rodando
+      security: []
+      responses:
+        '200':
+          description: Servidor está ativo
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Verifica se o sistema está pronto para receber requests
+      security: []
+      responses:
+        '200':
+          description: Sistema pronto
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Sistema não está pronto
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Métricas do sistema
+      description: Retorna métricas gerais do sistema em formato JSON
+      security: []
+      responses:
+        '200':
+          description: Métricas do sistema
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # ADMIN - TENANT MANAGEMENT
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /admin/tenants:
+    get:
+      tags:
+        - Admin - Tenants
+      summary: Lista todos os tenants
+      description: Requer global_admin
+      parameters:
+        - name: includeDeleted
+          in: query
+          schema:
+            type: boolean
+          description: Incluir tenants deletados
+      responses:
+        '200':
+          description: Lista de tenants
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Admin - Tenants
+      summary: Registra novo tenant
+      description: Requer global_admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRegistrationInput'
+      responses:
+        '201':
+          description: Tenant criado
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantConfig'
+        '400':
+          description: Dados inválidos ou tenant já existe
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/tenants/{id}:
+    get:
+      tags:
+        - Admin - Tenants
+      summary: Detalhes de um tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Dados do tenant
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Admin - Tenants
+      summary: Atualiza tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateInput'
+      responses:
+        '200':
+          description: Tenant atualizado
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantConfig'
+        '400':
+          description: Dados inválidos
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Admin - Tenants
+      summary: Remove tenant (soft delete)
+      description: Requer global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant removido
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/suspend:
+    post:
+      tags:
+        - Admin - Tenants
+      summary: Suspende tenant
+      description: Requer global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant suspenso
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/resume:
+    post:
+      tags:
+        - Admin - Tenants
+      summary: Reativa tenant suspenso
+      description: Requer global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant reativado
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # ADMIN - KEY MANAGEMENT
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /admin/tenants/{id}/keys:
+    get:
+      tags:
+        - Admin - Keys
+      summary: Lista chaves do tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Lista de chaves
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Admin - Keys
+      summary: Cria nova chave
+      description: |
+        Requer tenant_admin do próprio tenant ou global_admin.
+        **IMPORTANTE**: O token é retornado apenas uma vez. Salve-o imediatamente.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKeyInput'
+      responses:
+        '201':
+          description: Chave criada
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyCreatedResponse'
+        '400':
+          description: Role inválido
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/keys/{keyId}/revoke:
+    post:
+      tags:
+        - Admin - Keys
+      summary: Revoga uma chave
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chave revogada
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Chave já revogada
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/keys/rotate:
+    post:
+      tags:
+        - Admin - Keys
+      summary: Rotaciona chave (cria nova)
+      description: |
+        Cria nova chave para o role especificado.
+        Chaves antigas permanecem ativas até serem revogadas manualmente.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum: [public, tenant_admin]
+      responses:
+        '201':
+          description: Nova chave criada
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeyCreatedResponse'
+        '400':
+          description: Role inválido
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # ADMIN - AUDIT
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /admin/tenants/{id}/audit/verify:
+    get:
+      tags:
+        - Admin - Audit
+      summary: Verifica integridade da cadeia de eventos
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Resultado da verificação
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditVerifyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/audit/verify-fast:
+    get:
+      tags:
+        - Admin - Audit
+      summary: Verificação rápida via snapshot
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Resultado da verificação
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditVerifyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/audit/export:
+    get:
+      tags:
+        - Admin - Audit
+      summary: Exporta eventos por intervalo
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: fromTs
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: toTs
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: fromSegment
+          in: query
+          schema:
+            type: integer
+        - name: toSegment
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Eventos exportados
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventLogEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/audit/replay:
+    get:
+      tags:
+        - Admin - Audit
+      summary: Replay operacional
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: evento
+          in: query
+          schema:
+            type: string
+        - name: entidade
+          in: query
+          schema:
+            type: string
+        - name: entidadeId
+          in: query
+          schema:
+            type: string
+        - name: fromTs
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: toTs
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Eventos para replay
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/events:
+    get:
+      tags:
+        - Admin - Audit
+      summary: Lista eventos do tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Lista de eventos
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # ADMIN - METRICS & HEALTH
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /admin/tenants/{id}/metrics:
+    get:
+      tags:
+        - Admin - Metrics
+      summary: Métricas de um tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Métricas do tenant
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/metrics:
+    get:
+      tags:
+        - Admin - Metrics
+      summary: Métricas globais
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Métricas globais
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/health:
+    get:
+      tags:
+        - Admin - Metrics
+      summary: Health check global com detalhes
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Status de saúde
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/instances:
+    get:
+      tags:
+        - Admin - Metrics
+      summary: Lista instâncias ativas
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Lista de instâncias
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activeInstances:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/tenants/{id}/shutdown:
+    post:
+      tags:
+        - Admin - Metrics
+      summary: Força shutdown de uma instância
+      description: Requer global_admin
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Instância desligada
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Falha ao desligar
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/shutdown-all:
+    post:
+      tags:
+        - Admin - Metrics
+      summary: Shutdown de todas as instâncias
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Todas as instâncias desligadas
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # QUERY APIs (Inc 21)
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /admin/query/tenants:
+    get:
+      tags:
+        - Query
+      summary: Lista todos os tenants (query)
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Lista de tenants
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryTenantsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/query/instances:
+    get:
+      tags:
+        - Query
+      summary: Lista instâncias ativas (query)
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Lista de instâncias
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryInstancesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/query/metrics:
+    get:
+      tags:
+        - Query
+      summary: Métricas globais (query)
+      description: Requer global_admin
+      responses:
+        '200':
+          description: Métricas globais
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMetricsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/query/eventlog:
+    get:
+      tags:
+        - Query
+      summary: Consulta EventLog global
+      description: Requer global_admin
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+          description: Filtrar por tenant
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Eventos do log
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryEventLogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/query/{tenantId}/mandates:
+    get:
+      tags:
+        - Query
+      summary: Lista mandatos do tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Lista de mandatos
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryMandatesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/query/{tenantId}/mandates/{mandateId}:
+    get:
+      tags:
+        - Query
+      summary: Detalhes de um mandato
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: mandateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalhes do mandato
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mandate:
+                    $ref: '#/components/schemas/MandateInfo'
+                  history:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/query/{tenantId}/reviews:
+    get:
+      tags:
+        - Query
+      summary: Lista casos de revisão
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Lista de reviews
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryReviewsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/query/{tenantId}/reviews/{reviewId}:
+    get:
+      tags:
+        - Query
+      summary: Detalhes de um caso de revisão
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalhes do review
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviewCase:
+                    $ref: '#/components/schemas/ReviewCaseInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/query/{tenantId}/consequences:
+    get:
+      tags:
+        - Query
+      summary: Lista observações/consequências
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Lista de consequências
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryConsequencesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/query/{tenantId}/dashboard:
+    get:
+      tags:
+        - Query
+      summary: Dashboard resumido do tenant
+      description: Requer tenant_admin do próprio tenant ou global_admin
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dados do dashboard
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # PUBLIC API - DECISÕES
+  # ══════════════════════════════════════════════════════════════════════════
+
+  /api/v1/decisoes:
+    post:
+      tags:
+        - Public - Decisões
+      summary: Solicita uma decisão
+      description: |
+        Fluxo completo: situação → protocolo → decisão → contrato.
+        Requer token público do tenant e header X-Tenant-Id.
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisaoInput'
+      responses:
+        '201':
+          description: Contrato emitido
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisaoResponse'
+        '400':
+          description: Protocolo rejeitado ou dados inválidos
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          description: Erro no processamento
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/episodios/{id}:
+    get:
+      tags:
+        - Public - Decisões
+      summary: Consulta status de um episódio
+      description: Requer token público do tenant e header X-Tenant-Id
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID do episódio
+      responses:
+        '200':
+          description: Status do episódio
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EpisodioStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/episodios/{id}/encerrar:
+    post:
+      tags:
+        - Public - Decisões
+      summary: Encerra um episódio em observação
+      description: Requer token público do tenant e header X-Tenant-Id
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID do episódio
+      responses:
+        '200':
+          description: Episódio encerrado
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Falha ao encerrar
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/eventos:
+    get:
+      tags:
+        - Public - Decisões
+      summary: Lista eventos recentes
+      description: Requer token público do tenant e header X-Tenant-Id
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+        - name: tipo
+          in: query
+          schema:
+            type: string
+          description: Filtrar por tipo de evento
+        - name: entidade
+          in: query
+          schema:
+            type: string
+          description: Filtrar por tipo de entidade
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Lista de eventos
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventosQueryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/observacoes:
+    post:
+      tags:
+        - Public - Decisões
+      summary: Inicia observação de um episódio
+      description: Requer token público do tenant e header X-Tenant-Id
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - episodio_id
+              properties:
+                episodio_id:
+                  type: string
+      responses:
+        '200':
+          description: Observação iniciada
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Falha ao iniciar observação
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/eventlog/status:
+    get:
+      tags:
+        - Public - Decisões
+      summary: Status do EventLog do tenant
+      description: Requer token público do tenant e header X-Tenant-Id
+      parameters:
+        - $ref: '#/components/parameters/XTenantId'
+      responses:
+        '200':
+          description: Status do EventLog
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/X-Request-Id'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventLogStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
