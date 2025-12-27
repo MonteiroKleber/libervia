@@ -585,6 +585,7 @@ describe('Incremento 19: AutonomyConsequenceService', () => {
     eventLogRepo = new EventLogRepositoryImpl(
       path.join(testDir, 'eventlog.json')
     );
+    await eventLogRepo.init(); // Inicializar EventLog
 
     const context: AutonomyConsequenceContext = {
       mandateRepo,
@@ -629,6 +630,93 @@ describe('Incremento 19: AutonomyConsequenceService', () => {
     const updated = await mandateRepo.getById(mandate.id);
     expect(updated?.status).toBe('revoked');
     expect(updated?.revogado).toBe(true);
+  });
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // TESTES: resumeMandate com Guardas Canônicas
+  // ════════════════════════════════════════════════════════════════════════════
+
+  it('resumeMandate retoma mandato suspenso com humano autorizado', async () => {
+    const mandate = createTestMandate({
+      status: 'suspended',
+      suspendReason: 'Violação detectada'
+    });
+    await mandateRepo.create(mandate);
+
+    // Humano retoma (não é 'Libervia')
+    await service.resumeMandate(mandate.id, 'admin@empresa.com', 'Revisão concluída');
+
+    const updated = await mandateRepo.getById(mandate.id);
+    expect(updated?.status).toBe('active');
+    expect(updated?.suspendReason).toBeUndefined();
+  });
+
+  it('resumeMandate bloqueia sistema (Libervia) de retomar', async () => {
+    const mandate = createTestMandate({ status: 'suspended' });
+    await mandateRepo.create(mandate);
+
+    await expect(
+      service.resumeMandate(mandate.id, 'Libervia', 'Tentativa do sistema')
+    ).rejects.toThrow('Apenas humanos autorizados podem retomar mandatos suspensos');
+  });
+
+  it('resumeMandate é idempotente (mandato não suspenso)', async () => {
+    const mandate = createTestMandate({ status: 'active' });
+    await mandateRepo.create(mandate);
+
+    // Não deve lançar erro, apenas retornar silenciosamente
+    await service.resumeMandate(mandate.id, 'admin@empresa.com');
+
+    const updated = await mandateRepo.getById(mandate.id);
+    expect(updated?.status).toBe('active');
+  });
+
+  it('resumeMandate exige motivo quando triggeredByObservacaoId existe', async () => {
+    const mandate = createTestMandate({
+      status: 'suspended',
+      triggeredByObservacaoId: 'obs-123'
+    });
+    await mandateRepo.create(mandate);
+
+    await expect(
+      service.resumeMandate(mandate.id, 'admin@empresa.com') // sem reason
+    ).rejects.toThrow('Motivo de retomada é obrigatório');
+  });
+
+  it('resumeMandate aceita sem motivo quando não há triggeredByObservacaoId', async () => {
+    const mandate = createTestMandate({
+      status: 'suspended',
+      suspendReason: 'Suspensão manual'
+      // sem triggeredByObservacaoId
+    });
+    await mandateRepo.create(mandate);
+
+    // Deve funcionar sem reason
+    await service.resumeMandate(mandate.id, 'admin@empresa.com');
+
+    const updated = await mandateRepo.getById(mandate.id);
+    expect(updated?.status).toBe('active');
+  });
+
+  it('resumeMandate registra evento AUTONOMY_RESUMED', async () => {
+    const mandate = createTestMandate({
+      status: 'suspended',
+      suspendReason: 'Violação detectada',
+      triggeredByObservacaoId: 'obs-456'
+    });
+    await mandateRepo.create(mandate);
+
+    await service.resumeMandate(mandate.id, 'admin@empresa.com', 'Situação resolvida');
+
+    // Verificar evento foi registrado
+    // EventLog não guarda payload diretamente, apenas payload_hash
+    // Verificamos apenas que o evento existe com os campos corretos
+    const events = await eventLogRepo.getAll();
+    const resumeEvent = events.find(e => e.evento === 'AUTONOMY_RESUMED');
+    expect(resumeEvent).toBeDefined();
+    expect(resumeEvent?.entidade).toBe('AutonomyMandate');
+    expect(resumeEvent?.entidade_id).toBe(mandate.id);
+    expect(resumeEvent?.actor).toBe('admin@empresa.com');
   });
 });
 

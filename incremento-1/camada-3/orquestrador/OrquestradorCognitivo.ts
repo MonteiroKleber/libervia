@@ -54,6 +54,12 @@ import {
   AutonomyConsequenceService,
   AutonomyConsequenceContext
 } from '../autonomy/consequence';
+import {
+  ReviewCaseRepository,
+  ReviewCaseService,
+  ReviewCaseServiceContext,
+  CreateReviewCaseInput
+} from '../review';
 
 // ════════════════════════════════════════════════════════════════════════
 // INCREMENTO 4.1: TIPOS PARA HEALTH DO EVENTLOG
@@ -92,6 +98,8 @@ class OrquestradorCognitivo {
   private eventLog?: EventLogRepository;
   private eventLogStatus: EventLogStatus;
   private autonomyMandateRepo?: AutonomyMandateRepository; // INCREMENTO 17
+  private reviewCaseRepo?: ReviewCaseRepository; // INCREMENTO 20
+  private tenantId: string = 'default'; // INCREMENTO 20: Tenant padrão
 
   constructor(
     private situacaoRepo: SituacaoRepository,
@@ -102,10 +110,12 @@ class OrquestradorCognitivo {
     private protocoloRepo?: DecisionProtocolRepository, // Opcional para retrocompatibilidade
     eventLog?: EventLogRepository, // INCREMENTO 4: Opcional - o log observa, não governa
     private observacaoRepo?: ObservacaoRepository, // INCREMENTO 15: Opcional para consequências
-    autonomyMandateRepo?: AutonomyMandateRepository // INCREMENTO 17: Opcional para autonomia
+    autonomyMandateRepo?: AutonomyMandateRepository, // INCREMENTO 17: Opcional para autonomia
+    reviewCaseRepo?: ReviewCaseRepository // INCREMENTO 20: Opcional para review workflow
   ) {
     this.eventLog = eventLog;
     this.autonomyMandateRepo = autonomyMandateRepo;
+    this.reviewCaseRepo = reviewCaseRepo;
     // INCREMENTO 4.1: Inicializar estado de saúde do EventLog
     this.eventLogStatus = {
       enabled: !!eventLog,
@@ -164,6 +174,21 @@ class OrquestradorCognitivo {
    */
   GetEventLogStatus(): EventLogStatus {
     return { ...this.eventLogStatus, lastErrors: [...this.eventLogStatus.lastErrors] };
+  }
+
+  /**
+   * INCREMENTO 20: Define o tenantId para operações multi-tenant.
+   * Deve ser chamado antes de operações que criam ReviewCase.
+   */
+  setTenantId(tenantId: string): void {
+    this.tenantId = tenantId;
+  }
+
+  /**
+   * INCREMENTO 20: Retorna o tenantId atual.
+   */
+  getTenantId(): string {
+    return this.tenantId;
   }
 
   /**
@@ -1649,6 +1674,34 @@ class OrquestradorCognitivo {
           observacao.id,
           mandate?.id
         );
+
+        // INCREMENTO 20: Criar ReviewCase quando FLAG_HUMAN_REVIEW
+        if (this.reviewCaseRepo) {
+          const reviewServiceContext: ReviewCaseServiceContext = {
+            reviewRepo: this.reviewCaseRepo,
+            eventLog: this.eventLog,
+            mandateRepo: this.autonomyMandateRepo
+          };
+          const reviewService = new ReviewCaseService(reviewServiceContext);
+
+          const createInput: CreateReviewCaseInput = {
+            tenantId: this.tenantId,
+            triggeredBy: {
+              observacaoId: observacao.id,
+              mandateId: mandate?.id,
+              ruleId: result.ruleId,
+              actionSuggested: ConsequenceAction.FLAG_HUMAN_REVIEW
+            },
+            contextSnapshot: {
+              agentId,
+              mandateModo: mandate?.modo,
+              observacaoSinal: observacao.percebida.sinal,
+              triggers
+            }
+          };
+
+          await reviewService.createOrGetOpen(createInput, 'Libervia');
+        }
         break;
     }
 

@@ -458,6 +458,98 @@ class AutonomyConsequenceService {
     return this.flagHumanReviewInternal(mandateId, observacaoId, reason, 'Libervia', now);
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // OPERAÇÃO DE RESUME (Inc 19 - Guarda Canônica)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Retoma um mandato suspenso (versão com guardas canônicas).
+   *
+   * GUARDAS OBRIGATÓRIAS:
+   * 1. RBAC: Apenas humanos autorizados podem resumir
+   * 2. Estado: Não pode resumir se revoked/expired
+   * 3. Motivo: Se triggeredByObservacaoId existe, exige reason
+   * 4. Evento: Sempre emite AUTONOMY_RESUMED
+   *
+   * Operação idempotente: se não suspenso, não faz nada.
+   *
+   * @param mandateId - ID do mandato
+   * @param resumedBy - Ator que retoma (deve ser humano autorizado)
+   * @param reason - Motivo da retomada (obrigatório se havia observação)
+   * @param now - Data/hora atual
+   * @throws Error se mandato não encontrado
+   * @throws Error se mandato revogado/expirado
+   * @throws Error se triggeredByObservacaoId existe mas reason não fornecido
+   */
+  async resumeMandate(
+    mandateId: string,
+    resumedBy: ActorId,
+    reason?: string,
+    now: Date = new Date()
+  ): Promise<void> {
+    const mandate = await this.mandateRepo.getById(mandateId);
+    if (!mandate) {
+      throw new Error(`Mandato ${mandateId} não encontrado`);
+    }
+
+    // Guarda 1: Validar que não é sistema/agente (apenas humano pode resumir)
+    // Actor 'Libervia' é sistema, outros são humanos
+    if (resumedBy === 'Libervia') {
+      throw new Error('Apenas humanos autorizados podem retomar mandatos suspensos');
+    }
+
+    // Guarda 2: Não pode resumir mandato revogado ou expirado
+    // (verificar ANTES de idempotência para bloquear explicitamente)
+    if (mandate.status === 'revoked' || mandate.revogado) {
+      throw new Error(`Mandato ${mandateId} foi revogado e não pode ser retomado`);
+    }
+    if (mandate.status === 'expired') {
+      throw new Error(`Mandato ${mandateId} está expirado e não pode ser retomado`);
+    }
+
+    // Idempotência: se não suspenso (ex: active), não faz nada
+    if (mandate.status !== 'suspended') {
+      return;
+    }
+
+    // Guarda 3: Se há observação que disparou suspensão, exigir motivo
+    if (mandate.triggeredByObservacaoId && !reason) {
+      throw new Error(
+        `Mandato ${mandateId} foi suspenso por consequência (obs: ${mandate.triggeredByObservacaoId}). ` +
+        'Motivo de retomada é obrigatório.'
+      );
+    }
+
+    // Atualizar mandato
+    const updated: AutonomyMandate = {
+      ...mandate,
+      status: 'active',
+      // Limpar campos de suspensão (mantém histórico via EventLog)
+      suspendedAt: undefined,
+      suspendReason: undefined,
+      triggeredByObservacaoId: undefined
+    };
+
+    await this.mandateRepo.update(updated);
+
+    // Guarda 4: Sempre emitir evento de auditoria
+    await this.logEvent(
+      TipoEvento.AUTONOMY_RESUMED,
+      TipoEntidade.AUTONOMY_MANDATE,
+      mandate.id,
+      {
+        mandateId: mandate.id,
+        agentId: mandate.agentId,
+        resumedAt: now.toISOString(),
+        resumedBy,
+        reason: reason ?? 'Retomada sem observação prévia',
+        previousSuspendReason: mandate.suspendReason,
+        previousTriggeredBy: mandate.triggeredByObservacaoId
+      },
+      resumedBy
+    );
+  }
+
   /**
    * Registra flag de human review (versão interna).
    */

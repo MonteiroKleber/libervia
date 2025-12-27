@@ -222,6 +222,43 @@ export {
 } from './autonomy';
 
 // ════════════════════════════════════════════════════════════════════════════
+// HUMAN REVIEW WORKFLOW (INCREMENTO 20)
+// ════════════════════════════════════════════════════════════════════════════
+
+export {
+  // Tipos
+  ReviewCaseStatus,
+  ReviewResolution,
+  ReviewEffect,
+  ReviewContextSnapshot,
+  ReviewTrigger,
+  ReviewDecision,
+  ReviewCase,
+  CreateReviewCaseInput,
+  ResolveReviewCaseInput,
+  DismissReviewCaseInput,
+  ReviewCaseFilters,
+  // Erros
+  ReviewError,
+  ReviewCaseNotFoundError,
+  InvalidReviewTransitionError,
+  ReviewNotesRequiredError,
+  ReviewCaseAlreadyExistsError,
+  InvalidReviewEffectError,
+  ReviewAccessDeniedError,
+  REVIEW_RULE,
+  // Repositório
+  ReviewCaseRepository,
+  CreateOrGetResult,
+  ReviewCaseRepositoryImpl,
+  // Serviço
+  ReviewCaseService,
+  ReviewCaseServiceContext,
+  CreateReviewResult,
+  ResolveReviewResult
+} from './review';
+
+// ════════════════════════════════════════════════════════════════════════════
 // UTILITÁRIOS
 // ════════════════════════════════════════════════════════════════════════════
 
