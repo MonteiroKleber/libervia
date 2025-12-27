@@ -1172,24 +1172,29 @@ class EventLogRepositoryImpl implements EventLogRepository {
 
   /**
    * SOMENTE PARA TESTES: Corrompe um evento para testar verifyChain.
+   * Retorna Promise para garantir que a corrupção foi aplicada.
    * @internal
    */
-  _corruptEntry(index: number, field: keyof EventLogEntry, value: any): void {
-    // Encontrar o evento no segmento atual ou carregar todos
-    if (index < this.totalEvents - this.currentSegmentEntries.length) {
-      // Evento está em segmento anterior - carregar cache
-      this.getAll().then(all => {
-        if (index >= 0 && index < all.length) {
-          (all[index] as any)[field] = value;
-          this.allEntriesCache = all;
-        }
-      });
-    } else {
-      // Evento está no segmento atual
-      const localIndex = index - (this.totalEvents - this.currentSegmentEntries.length);
+  async _corruptEntry(index: number, field: keyof EventLogEntry, value: any): Promise<void> {
+    // Sempre carregar todos os eventos para garantir consistência
+    const all = await this.getAll();
+
+    if (index < 0 || index >= all.length) {
+      throw new Error(`Invalid index ${index}, total events: ${all.length}`);
+    }
+
+    // Modificar o evento no array
+    (all[index] as any)[field] = value;
+
+    // Atualizar o cache com os dados corrompidos
+    this.allEntriesCache = all;
+
+    // Se o evento está no segmento atual, também corromper lá
+    const eventsInPreviousSegments = this.totalEvents - this.currentSegmentEntries.length;
+    if (index >= eventsInPreviousSegments) {
+      const localIndex = index - eventsInPreviousSegments;
       if (localIndex >= 0 && localIndex < this.currentSegmentEntries.length) {
         (this.currentSegmentEntries[localIndex] as any)[field] = value;
-        this.invalidateCache();
       }
     }
   }

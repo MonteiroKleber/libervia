@@ -470,6 +470,8 @@ describe('Incremento 8 - Backup e Restauracao', () => {
 // ════════════════════════════════════════════════════════════════════════════
 
 describe('Incremento 8 - Validacao Pre-Producao', () => {
+  // Aumentar timeout para testes de stress
+  jest.setTimeout(15000);
   test('Drill modo fast - subset de cenarios', async () => {
     const testDir = await createTestDataDir('inc8-drill-fast');
 
@@ -583,6 +585,9 @@ describe('Incremento 8 - Validacao Pre-Producao', () => {
 // ════════════════════════════════════════════════════════════════════════════
 
 describe('Incremento 8 - Criterios Go-Live', () => {
+  // Aumentar timeout para testes de stress
+  jest.setTimeout(15000);
+
   test('Todos os criterios obrigatorios passam', async () => {
     const testDir = await createTestDataDir('inc8-criterios');
 

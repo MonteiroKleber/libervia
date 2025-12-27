@@ -219,7 +219,7 @@ describe('Incremento 4.3 - Auditoria Operacional', () => {
       await eventLog.append('Libervia', TipoEvento.EPISODIO_CRIADO, TipoEntidade.EPISODIO, 'ep-1', {});
 
       // Corromper o segundo evento em memória
-      eventLog._corruptEntry(1, 'current_hash', 'CORRUPTED_HASH');
+      await eventLog._corruptEntry(1, 'current_hash', 'CORRUPTED_HASH');
 
       const result = await eventLog.replay();
 
@@ -322,7 +322,7 @@ describe('Incremento 4.3 - Auditoria Operacional', () => {
       await eventLog.append('Libervia', TipoEvento.SITUACAO_CRIADA, TipoEntidade.SITUACAO, 'sit-1', {});
 
       // Corromper genesis
-      eventLog._corruptEntry(0, 'current_hash', 'CORRUPTED');
+      await eventLog._corruptEntry(0, 'current_hash', 'CORRUPTED');
 
       const result = await eventLog.verifyFromSnapshot();
 

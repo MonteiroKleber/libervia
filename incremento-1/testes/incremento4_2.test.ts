@@ -163,10 +163,7 @@ describe('Incremento 4.2 - Rotação, Snapshot e Retenção', () => {
       }
 
       // Corromper evento no limite entre segmentos (índice 3)
-      eventLog._corruptEntry(3, 'previous_hash', 'CORRUPTED_HASH');
-
-      // Aguardar o cache ser atualizado
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await eventLog._corruptEntry(3, 'previous_hash', 'CORRUPTED_HASH');
 
       const result = await eventLog.verifyChainFull();
       expect(result.valid).toBe(false);

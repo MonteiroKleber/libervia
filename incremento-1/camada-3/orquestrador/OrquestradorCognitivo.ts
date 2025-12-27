@@ -3,6 +3,7 @@ import { EpisodioRepository } from '../repositorios/interfaces/EpisodioRepositor
 import { DecisaoRepository } from '../repositorios/interfaces/DecisaoRepository';
 import { ContratoRepository } from '../repositorios/interfaces/ContratoRepository';
 import { DecisionProtocolRepository } from '../repositorios/interfaces/DecisionProtocolRepository';
+import { ObservacaoRepository } from '../repositorios/interfaces/ObservacaoRepository';
 import {
   EventLogRepository,
   ExportRangeOptions,
@@ -12,6 +13,10 @@ import {
 } from '../event-log/EventLogRepository';
 import { ActorId, TipoEvento, TipoEntidade, ChainVerificationResult } from '../event-log/EventLogEntry';
 import { MemoryQueryService } from '../servicos/MemoryQueryService';
+import {
+  ObservacaoDeConsequencia,
+  RegistroConsequenciaInput
+} from '../entidades/ObservacaoDeConsequencia';
 import {
   SituacaoDecisoria,
   EpisodioDecisao,
@@ -26,6 +31,29 @@ import {
   MemoryQueryResult,
   AnexoAnalise
 } from '../entidades/tipos';
+import { validateClosedLayer, ClosedLayerResult } from '../camada-fechada';
+import { runMultiAgent, MultiAgentContext } from '../multiagente/MultiAgentRunner';
+import { MultiAgentRunInput, MultiAgentRunResult } from '../multiagente/MultiAgentTypes';
+import {
+  AutonomyMode,
+  AutonomyMandate,
+  AutonomyCheckInput,
+  AutonomyCheckResult,
+  MandateExpireReason,
+  evaluate as evaluateAutonomy,
+  AutonomyCheckResultExtended,
+  shouldMarkExpired
+} from '../autonomy';
+import { AutonomyMandateRepository } from '../autonomy/AutonomyMandateRepository';
+import { HumanOverrideRequiredError } from '../autonomy/AutonomyErrors';
+import {
+  ConsequenceAutonomyTriggers,
+  ConsequenceAction,
+  ConsequenceAutonomyResult,
+  evaluateConsequenceImpact,
+  AutonomyConsequenceService,
+  AutonomyConsequenceContext
+} from '../autonomy/consequence';
 
 // ════════════════════════════════════════════════════════════════════════
 // INCREMENTO 4.1: TIPOS PARA HEALTH DO EVENTLOG
@@ -63,6 +91,7 @@ const MAX_ERROR_BUFFER = 20;
 class OrquestradorCognitivo {
   private eventLog?: EventLogRepository;
   private eventLogStatus: EventLogStatus;
+  private autonomyMandateRepo?: AutonomyMandateRepository; // INCREMENTO 17
 
   constructor(
     private situacaoRepo: SituacaoRepository,
@@ -71,9 +100,12 @@ class OrquestradorCognitivo {
     private contratoRepo: ContratoRepository,
     private memoryService: MemoryQueryService,
     private protocoloRepo?: DecisionProtocolRepository, // Opcional para retrocompatibilidade
-    eventLog?: EventLogRepository // INCREMENTO 4: Opcional - o log observa, não governa
+    eventLog?: EventLogRepository, // INCREMENTO 4: Opcional - o log observa, não governa
+    private observacaoRepo?: ObservacaoRepository, // INCREMENTO 15: Opcional para consequências
+    autonomyMandateRepo?: AutonomyMandateRepository // INCREMENTO 17: Opcional para autonomia
   ) {
     this.eventLog = eventLog;
+    this.autonomyMandateRepo = autonomyMandateRepo;
     // INCREMENTO 4.1: Inicializar estado de saúde do EventLog
     this.eventLogStatus = {
       enabled: !!eventLog,
@@ -666,6 +698,26 @@ class OrquestradorCognitivo {
       );
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // INCREMENTO 13: CAMADA FECHADA - Validação de bloqueio
+    // ══════════════════════════════════════════════════════════════════════
+
+    const situacao = await this.situacaoRepo.getById(episodio.situacao_referenciada);
+    if (!situacao) {
+      throw new Error(
+        `SituacaoDecisoria ${episodio.situacao_referenciada} não encontrada`
+      );
+    }
+
+    const closedLayerResult = validateClosedLayer(situacao, protocolo);
+    if (closedLayerResult.blocked) {
+      throw new Error(
+        `Decisão bloqueada pela Camada Fechada. ` +
+        `Regra: ${closedLayerResult.rule}. ` +
+        `Motivo: ${closedLayerResult.reason}`
+      );
+    }
+
     // Validar consistência entre protocolo e decisão
     if (protocolo.alternativa_escolhida !== decisaoInput.alternativa_escolhida) {
       throw new Error(
@@ -938,6 +990,777 @@ class OrquestradorCognitivo {
     // Apenas dados factuais da consulta
 
     return linhas.join('\n');
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // INCREMENTO 15: REGISTRO DE CONSEQUÊNCIAS
+  // ════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Registra uma consequência (observada + percebida) para um contrato existente.
+   *
+   * INVARIANTES:
+   * - Contrato DEVE existir (pós-execução)
+   * - Append-only: nunca editar, nunca deletar
+   * - Imutável após criação
+   * - Anti-fraude: valida observacao_minima_requerida do contrato
+   *
+   * @param contratoId ID do contrato ao qual a consequência se refere
+   * @param input Dados da consequência (observada + percebida)
+   * @param options Opções adicionais (actor para auditoria)
+   * @returns ObservacaoDeConsequencia criada
+   */
+  async RegistrarConsequencia(
+    contratoId: string,
+    input: RegistroConsequenciaInput,
+    options?: { actor?: ActorId }
+  ): Promise<ObservacaoDeConsequencia> {
+    const actor = options?.actor ?? 'external';
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO 1: ObservacaoRepository deve estar configurado
+    // ══════════════════════════════════════════════════════════════════════
+    if (!this.observacaoRepo) {
+      throw new Error(
+        'ObservacaoRepository não configurado. ' +
+        'Passe observacaoRepo no constructor para usar Incremento 15.'
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO 2: Contrato DEVE existir
+    // ══════════════════════════════════════════════════════════════════════
+    const contrato = await this.contratoRepo.getById(contratoId);
+    if (!contrato) {
+      throw new Error(
+        `ContratoDeDecisao com id ${contratoId} não encontrado. ` +
+        `Consequências só podem ser registradas para contratos existentes.`
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO 3: Episódio DEVE estar em estado apropriado
+    // ══════════════════════════════════════════════════════════════════════
+    const episodio = await this.episodioRepo.getById(contrato.episodio_id);
+    if (!episodio) {
+      throw new Error(
+        `EpisodioDecisao ${contrato.episodio_id} não encontrado. ` +
+        `Inconsistência de dados.`
+      );
+    }
+
+    // Consequências são pós-execução: episódio deve estar DECIDIDO, EM_OBSERVACAO ou ENCERRADO
+    const estadosValidos = [
+      EstadoEpisodio.DECIDIDO,
+      EstadoEpisodio.EM_OBSERVACAO,
+      EstadoEpisodio.ENCERRADO
+    ];
+
+    if (!estadosValidos.includes(episodio.estado)) {
+      throw new Error(
+        `Consequência só pode ser registrada para episódio em estado ` +
+        `DECIDIDO, EM_OBSERVACAO ou ENCERRADO. Estado atual: ${episodio.estado}`
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO 4: Campos obrigatórios
+    // ══════════════════════════════════════════════════════════════════════
+    if (!input.observada) {
+      throw new Error('observada é obrigatório');
+    }
+    if (!input.observada.descricao) {
+      throw new Error('observada.descricao é obrigatório');
+    }
+    if (!input.percebida) {
+      throw new Error('percebida é obrigatório');
+    }
+    if (!input.percebida.descricao) {
+      throw new Error('percebida.descricao é obrigatório');
+    }
+    if (!input.percebida.sinal) {
+      throw new Error('percebida.sinal é obrigatório');
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO 5: Anti-fraude - observacao_minima_requerida
+    // ══════════════════════════════════════════════════════════════════════
+    if (!input.evidencias_minimas || input.evidencias_minimas.length === 0) {
+      throw new Error('evidencias_minimas é obrigatório e deve ter ao menos 1 item');
+    }
+
+    // Tratar contratos antigos: undefined ou [] = sem exigência adicional
+    const observacaoMinimaRequerida = contrato.observacao_minima_requerida ?? [];
+
+    // Verificar se todas as evidências mínimas requeridas estão presentes
+    const faltantes = observacaoMinimaRequerida.filter(
+      requerida => !input.evidencias_minimas.includes(requerida)
+    );
+
+    if (faltantes.length > 0) {
+      throw new Error(
+        `Evidências mínimas faltantes (anti-fraude): ${faltantes.join(', ')}. ` +
+        `O contrato exige: ${observacaoMinimaRequerida.join(', ')}`
+      );
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO 6: Se é follow-up, observação anterior deve existir
+    // ══════════════════════════════════════════════════════════════════════
+    if (input.observacao_anterior_id) {
+      const observacaoAnterior = await this.observacaoRepo.getById(
+        input.observacao_anterior_id
+      );
+      if (!observacaoAnterior) {
+        throw new Error(
+          `Observação anterior ${input.observacao_anterior_id} não encontrada. ` +
+          `Follow-up deve referenciar observação existente.`
+        );
+      }
+      if (observacaoAnterior.contrato_id !== contratoId) {
+        throw new Error(
+          `Observação anterior pertence a contrato diferente. ` +
+          `Follow-up deve referenciar observação do mesmo contrato.`
+        );
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // CRIAR OBSERVAÇÃO
+    // ══════════════════════════════════════════════════════════════════════
+    const now = new Date();
+
+    const observacao: ObservacaoDeConsequencia = {
+      id: this.gerarId(),
+      contrato_id: contratoId,
+      episodio_id: contrato.episodio_id,
+      observada: {
+        descricao: input.observada.descricao,
+        indicadores: input.observada.indicadores,
+        anexos: input.observada.anexos?.map(a => ({
+          ...a,
+          data_anexo: a.data_anexo ?? now
+        })),
+        limites_respeitados: input.observada.limites_respeitados,
+        condicoes_cumpridas: input.observada.condicoes_cumpridas
+      },
+      percebida: {
+        descricao: input.percebida.descricao,
+        sinal: input.percebida.sinal,
+        risco_percebido: input.percebida.risco_percebido,
+        licoes: input.percebida.licoes,
+        contexto_adicional: input.percebida.contexto_adicional
+      },
+      evidencias_minimas: input.evidencias_minimas,
+      registrado_por: actor,
+      data_registro: now,
+      observacao_anterior_id: input.observacao_anterior_id,
+      notas: input.notas
+    };
+
+    // Persistir
+    await this.observacaoRepo.create(observacao);
+
+    // INCREMENTO 4: Log de consequência registrada
+    await this.logEvent(
+      TipoEvento.CONSEQUENCIA_REGISTRADA,
+      TipoEntidade.OBSERVACAO,
+      observacao.id,
+      observacao,
+      actor
+    );
+
+    // ══════════════════════════════════════════════════════════════════════
+    // INCREMENTO 19: AVALIAR E APLICAR POLICY DE CONSEQUÊNCIA
+    // Se autonomyTriggers fornecidos E autonomyMandateRepo disponível
+    // ══════════════════════════════════════════════════════════════════════
+    if (input.autonomyTriggers && this.autonomyMandateRepo && input.agentId) {
+      const consequenceResult = await this.AvaliarEAplicarConsequencia(
+        observacao,
+        input.autonomyTriggers,
+        input.agentId
+      );
+
+      // Retornar observação com resultado da avaliação de consequência
+      return {
+        ...observacao,
+        _consequenceResult: consequenceResult
+      } as ObservacaoDeConsequencia & { _consequenceResult?: ConsequenceAutonomyResult };
+    }
+
+    return observacao;
+  }
+
+  /**
+   * Busca consequências registradas para um contrato.
+   * Retorna lista ordenada por data_registro (mais antiga primeiro).
+   */
+  async GetConsequenciasByContrato(contratoId: string): Promise<ObservacaoDeConsequencia[]> {
+    if (!this.observacaoRepo) {
+      throw new Error(
+        'ObservacaoRepository não configurado. ' +
+        'Passe observacaoRepo no constructor para usar Incremento 15.'
+      );
+    }
+
+    // Validar que contrato existe
+    const contrato = await this.contratoRepo.getById(contratoId);
+    if (!contrato) {
+      throw new Error(`ContratoDeDecisao com id ${contratoId} não encontrado`);
+    }
+
+    return this.observacaoRepo.getByContratoId(contratoId);
+  }
+
+  /**
+   * Busca consequências registradas para um episódio.
+   * Retorna lista ordenada por data_registro (mais antiga primeiro).
+   */
+  async GetConsequenciasByEpisodio(episodioId: string): Promise<ObservacaoDeConsequencia[]> {
+    if (!this.observacaoRepo) {
+      throw new Error(
+        'ObservacaoRepository não configurado. ' +
+        'Passe observacaoRepo no constructor para usar Incremento 15.'
+      );
+    }
+
+    // Validar que episódio existe
+    const episodio = await this.episodioRepo.getById(episodioId);
+    if (!episodio) {
+      throw new Error(`EpisodioDecisao com id ${episodioId} não encontrado`);
+    }
+
+    return this.observacaoRepo.getByEpisodioId(episodioId);
+  }
+
+  /**
+   * Conta quantas consequências foram registradas para um contrato.
+   */
+  async CountConsequenciasByContrato(contratoId: string): Promise<number> {
+    if (!this.observacaoRepo) {
+      return 0;
+    }
+
+    return this.observacaoRepo.countByContratoId(contratoId);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // INCREMENTO 16: MULTIAGENTE
+  // ════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Processa uma solicitação de decisão usando múltiplos agentes.
+   *
+   * Multiagente = múltiplos agentes decisores processam a mesma situação
+   * sob perfis/mandatos distintos, produzindo propostas candidatas
+   * e uma agregação institucional final.
+   *
+   * PRINCÍPIOS:
+   * - NÃO é LLM, nem otimizador, nem previsão
+   * - É divergência deliberada de perfis com rastreabilidade
+   * - Closed Layer continua soberana (valida antes de cada proposta)
+   * - Um episódio por situação (não fragmentar vivência)
+   *
+   * @param situacao - Situação decisória a processar
+   * @param input - Configuração do multiagente (agentes, política, dados base)
+   * @param options - Opções adicionais (actor, emitidoPara)
+   * @returns Resultado completo da execução multiagente
+   */
+  async ProcessarSolicitacaoMultiAgente(
+    situacao: SituacaoDecisoria,
+    input: MultiAgentRunInput,
+    options?: { actor?: ActorId; emitidoPara?: string }
+  ): Promise<MultiAgentRunResult> {
+    // Validar que protocoloRepo está configurado
+    if (!this.protocoloRepo) {
+      throw new Error(
+        'DecisionProtocolRepository não configurado. ' +
+        'Passe protocoloRepo no constructor para usar Incremento 16 (Multiagente).'
+      );
+    }
+
+    // Criar contexto para o runner
+    const context: MultiAgentContext = {
+      situacaoRepo: this.situacaoRepo,
+      episodioRepo: this.episodioRepo,
+      decisaoRepo: this.decisaoRepo,
+      contratoRepo: this.contratoRepo,
+      protocoloRepo: this.protocoloRepo,
+      eventLog: this.eventLog,
+      gerarId: () => this.gerarId()
+    };
+
+    // Delegar para o runner
+    return runMultiAgent(situacao, input, context, options);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // INCREMENTO 17: AUTONOMIA GRADUADA
+  // ════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Concede um mandato de autonomia para um agente.
+   *
+   * PRINCÍPIOS:
+   * - Mandatos são explícitos (nunca inferidos)
+   * - Mandatos são revogáveis
+   * - Mandatos são auditáveis (registrados no EventLog)
+   *
+   * @param mandate - Mandato a conceder
+   * @returns Mandato criado
+   */
+  async ConcederMandato(mandate: AutonomyMandate): Promise<AutonomyMandate> {
+    if (!this.autonomyMandateRepo) {
+      throw new Error(
+        'AutonomyMandateRepository não configurado. ' +
+        'Passe autonomyMandateRepo no constructor para usar Incremento 17.'
+      );
+    }
+
+    // Validar campos obrigatórios
+    if (!mandate.id) {
+      throw new Error('mandate.id é obrigatório');
+    }
+    if (!mandate.agentId) {
+      throw new Error('mandate.agentId é obrigatório');
+    }
+    if (!mandate.modo) {
+      throw new Error('mandate.modo é obrigatório');
+    }
+    if (!mandate.politicas_permitidas || mandate.politicas_permitidas.length === 0) {
+      throw new Error('mandate.politicas_permitidas é obrigatório e não pode ser vazio');
+    }
+    if (!mandate.perfil_risco_maximo) {
+      throw new Error('mandate.perfil_risco_maximo é obrigatório');
+    }
+    if (!mandate.concedido_por) {
+      throw new Error('mandate.concedido_por é obrigatório');
+    }
+
+    // Garantir campos padrão
+    const mandateToCreate: AutonomyMandate = {
+      ...mandate,
+      concedido_em: mandate.concedido_em ?? new Date(),
+      limites: mandate.limites ?? [],
+      requer_humano_se: mandate.requer_humano_se ?? [],
+      revogado: false
+    };
+
+    // Persistir
+    await this.autonomyMandateRepo.create(mandateToCreate);
+
+    // Log de concessão
+    await this.logEvent(
+      TipoEvento.AUTONOMY_GRANTED,
+      TipoEntidade.AUTONOMY_MANDATE,
+      mandate.id,
+      mandateToCreate,
+      mandate.concedido_por
+    );
+
+    return mandateToCreate;
+  }
+
+  /**
+   * Revoga um mandato de autonomia.
+   *
+   * @param mandateId - ID do mandato a revogar
+   * @param revogadoPor - Ator que revoga
+   * @param motivo - Motivo da revogação
+   */
+  async RevogarMandato(
+    mandateId: string,
+    revogadoPor: ActorId,
+    motivo?: string
+  ): Promise<void> {
+    if (!this.autonomyMandateRepo) {
+      throw new Error(
+        'AutonomyMandateRepository não configurado. ' +
+        'Passe autonomyMandateRepo no constructor para usar Incremento 17.'
+      );
+    }
+
+    // Verificar se mandato existe
+    const mandate = await this.autonomyMandateRepo.getById(mandateId);
+    if (!mandate) {
+      throw new Error(`Mandato ${mandateId} não encontrado`);
+    }
+
+    if (mandate.revogado) {
+      throw new Error(`Mandato ${mandateId} já foi revogado`);
+    }
+
+    // Revogar
+    await this.autonomyMandateRepo.revoke(mandateId, revogadoPor, motivo);
+
+    // Log de revogação
+    await this.logEvent(
+      TipoEvento.AUTONOMY_REVOKED,
+      TipoEntidade.AUTONOMY_MANDATE,
+      mandateId,
+      { agentId: mandate.agentId, motivo },
+      revogadoPor
+    );
+  }
+
+  /**
+   * Obtém o mandato ativo de um agente.
+   *
+   * @param agentId - ID do agente
+   * @returns Mandato ativo ou null
+   */
+  async GetMandatoAtivo(agentId: string): Promise<AutonomyMandate | null> {
+    if (!this.autonomyMandateRepo) {
+      return null;
+    }
+
+    return this.autonomyMandateRepo.getMostRecentActiveByAgentId(agentId);
+  }
+
+  /**
+   * Avalia se um agente tem autonomia para uma decisão.
+   *
+   * REGRAS CANÔNICAS:
+   * 1. ENSINO nunca decide
+   * 2. Mandato é obrigatório fora do ensino
+   * 3. Política precisa estar autorizada
+   * 4. Perfil de risco não pode exceder
+   * 5. Camada Fechada sempre vence
+   *
+   * INCREMENTO 18 adiciona:
+   * - Verificação de validFrom (mandato ainda não ativo)
+   * - Verificação de validUntil (mandato expirado por tempo)
+   * - Verificação de maxUses (mandato esgotado por usos)
+   * - Parâmetro now para testes determinísticos
+   *
+   * @param input - Dados para avaliação
+   * @param now - Data atual (opcional, para testes determinísticos)
+   * @returns Resultado da avaliação (estendido com info de expiração)
+   */
+  async AvaliarAutonomia(
+    input: AutonomyCheckInput,
+    now?: Date
+  ): Promise<AutonomyCheckResultExtended> {
+    const currentTime = now ?? new Date();
+
+    // Se não tiver repositório de autonomia, modo é ENSINO
+    if (!this.autonomyMandateRepo) {
+      const result = evaluateAutonomy({
+        ...input,
+        mandate: undefined,
+        now: currentTime
+      });
+
+      // Log de verificação
+      if (result.permitido) {
+        await this.logEvent(
+          TipoEvento.AUTONOMY_CHECK_PASSED,
+          TipoEntidade.AUTONOMY_MANDATE,
+          input.agentId,
+          { ...input, result }
+        );
+      } else {
+        await this.logEvent(
+          TipoEvento.AUTONOMY_CHECK_FAILED,
+          TipoEntidade.AUTONOMY_MANDATE,
+          input.agentId,
+          { ...input, result }
+        );
+      }
+
+      return result;
+    }
+
+    // Obter mandato se não fornecido
+    let mandate = input.mandate;
+    if (!mandate) {
+      mandate = await this.autonomyMandateRepo.getMostRecentActiveByAgentId(input.agentId, currentTime) ?? undefined;
+    }
+
+    // Avaliar com data atual
+    const result = evaluateAutonomy({
+      ...input,
+      mandate,
+      now: currentTime
+    });
+
+    // INCREMENTO 18: Se resultado indica que mandato precisa ser expirado
+    if (result.shouldExpire && result.mandato_id && result.expireReason) {
+      await this.MarcarMandatoExpirado(result.mandato_id, result.expireReason, currentTime);
+    }
+
+    // Log de verificação
+    if (result.permitido) {
+      await this.logEvent(
+        TipoEvento.AUTONOMY_CHECK_PASSED,
+        TipoEntidade.AUTONOMY_MANDATE,
+        input.agentId,
+        { ...input, result }
+      );
+    } else {
+      await this.logEvent(
+        TipoEvento.AUTONOMY_CHECK_FAILED,
+        TipoEntidade.AUTONOMY_MANDATE,
+        input.agentId,
+        { ...input, result }
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Verifica autonomia e lança exceção se não permitido.
+   *
+   * Uso típico: antes de emitir contrato final.
+   *
+   * @param input - Dados para avaliação
+   * @throws HumanOverrideRequiredError se autonomia não permitida
+   */
+  async VerificarAutonomiaOuBloquear(input: AutonomyCheckInput): Promise<void> {
+    const result = await this.AvaliarAutonomia(input);
+
+    if (!result.permitido) {
+      // Log de bloqueio
+      await this.logEvent(
+        TipoEvento.AUTONOMY_BLOCKED,
+        TipoEntidade.AUTONOMY_MANDATE,
+        input.agentId,
+        { ...input, result }
+      );
+
+      throw new HumanOverrideRequiredError(
+        result.motivo ?? 'Autonomia não permitida',
+        result.modo,
+        input.agentId,
+        result.mandato_id
+      );
+    }
+  }
+
+  /**
+   * Obtém histórico de mandatos de um agente (incluindo revogados).
+   *
+   * @param agentId - ID do agente
+   * @returns Lista de mandatos
+   */
+  async GetHistoricoMandatos(agentId: string): Promise<AutonomyMandate[]> {
+    if (!this.autonomyMandateRepo) {
+      return [];
+    }
+
+    return this.autonomyMandateRepo.getAllByAgentId(agentId);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // INCREMENTO 19: POLICY DE CONSEQUÊNCIA PARA AUTONOMIA
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Avalia e aplica a policy de consequência para autonomia.
+   *
+   * PRINCÍPIOS:
+   * - Determinístico: mesmas entradas = mesmos resultados
+   * - Sem IA: regras puras, sem heurística
+   * - Idempotente: ações já aplicadas não são reaplicadas
+   *
+   * @param observacao - Observação de consequência registrada
+   * @param triggers - Gatilhos de autonomia
+   * @param agentId - ID do agente
+   * @returns Resultado da avaliação
+   */
+  private async AvaliarEAplicarConsequencia(
+    observacao: ObservacaoDeConsequencia,
+    triggers: ConsequenceAutonomyTriggers,
+    agentId: string
+  ): Promise<ConsequenceAutonomyResult> {
+    if (!this.autonomyMandateRepo) {
+      return {
+        action: ConsequenceAction.NO_ACTION,
+        reason: 'AutonomyMandateRepository não configurado',
+        ruleId: 'RULE_19_0_NO_TRIGGER' as any,
+        effects: {}
+      };
+    }
+
+    // Obter mandato atual do agente
+    const mandate = await this.autonomyMandateRepo.getMostRecentActiveByAgentId(agentId);
+
+    // Avaliar impacto (função pura, sem I/O)
+    const result = evaluateConsequenceImpact({
+      observacao,
+      triggers,
+      mandate: mandate ?? undefined,
+      currentMode: mandate?.modo
+    });
+
+    // Se ação já foi aplicada ou não há ação, retornar
+    if (result.alreadyApplied || result.action === ConsequenceAction.NO_ACTION) {
+      return result;
+    }
+
+    // Criar contexto para aplicar efeitos
+    const context: AutonomyConsequenceContext = {
+      mandateRepo: this.autonomyMandateRepo,
+      eventLog: this.eventLog
+    };
+
+    const service = new AutonomyConsequenceService(context);
+
+    // Aplicar efeitos conforme ação
+    switch (result.action) {
+      case ConsequenceAction.SUSPEND_MANDATE:
+        if (mandate) {
+          await service.suspendMandate(
+            mandate.id,
+            result.effects.suspendReason ?? 'Suspensão por consequência',
+            observacao.id
+          );
+        }
+        break;
+
+      case ConsequenceAction.REVOKE_MANDATE:
+        if (mandate) {
+          await service.revokeByConsequence(
+            mandate.id,
+            result.reason,
+            observacao.id
+          );
+        }
+        break;
+
+      case ConsequenceAction.DEGRADE_MODE:
+        // Degradação de modo é registrada no EventLog
+        // O novo modo é aplicado no próximo AvaliarAutonomia
+        if (mandate && result.effects.newAutonomyMode) {
+          await service.degradeMode(
+            mandate.id,
+            mandate.modo,
+            result.effects.newAutonomyMode,
+            observacao.id
+          );
+        }
+        break;
+
+      case ConsequenceAction.FLAG_HUMAN_REVIEW:
+        await service.flagHumanReview(
+          agentId,
+          result.reason,
+          observacao.id,
+          mandate?.id
+        );
+        break;
+    }
+
+    return result;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // INCREMENTO 18: MÉTODOS DE MANDATOS TEMPORAIS E LIMITE DE USOS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Marca um mandato como expirado.
+   * Registra evento AUTONOMY_EXPIRED no EventLog.
+   * Operação idempotente: se já expirado, não faz nada.
+   *
+   * @param mandateId - ID do mandato
+   * @param reason - Motivo da expiração ('TIME' ou 'USES')
+   * @param now - Data da expiração
+   */
+  async MarcarMandatoExpirado(
+    mandateId: string,
+    reason: MandateExpireReason,
+    now: Date = new Date()
+  ): Promise<void> {
+    if (!this.autonomyMandateRepo) {
+      throw new Error(
+        'AutonomyMandateRepository não configurado. ' +
+        'Passe autonomyMandateRepo no constructor para usar Incremento 18.'
+      );
+    }
+
+    // Verificar se mandato existe
+    const mandate = await this.autonomyMandateRepo.getById(mandateId);
+    if (!mandate) {
+      throw new Error(`Mandato ${mandateId} não encontrado`);
+    }
+
+    // Idempotência: se já expirado, não faz nada
+    if (mandate.status === 'expired') {
+      return;
+    }
+
+    // Marcar como expirado
+    await this.autonomyMandateRepo.markExpired(mandateId, reason, now);
+
+    // Log de expiração
+    await this.logEvent(
+      TipoEvento.AUTONOMY_EXPIRED,
+      TipoEntidade.AUTONOMY_MANDATE,
+      mandateId,
+      {
+        mandateId,
+        agentId: mandate.agentId,
+        expiredAt: now.toISOString(),
+        reason
+      }
+    );
+  }
+
+  /**
+   * Registra uso de mandato.
+   * Incrementa contador de usos e registra evento.
+   * Deve ser chamado APÓS avaliação passar e ANTES de emitir contrato.
+   *
+   * @param mandateId - ID do mandato
+   * @param now - Data do uso
+   * @returns Mandato atualizado
+   */
+  async RegistrarUsoMandato(
+    mandateId: string,
+    now: Date = new Date()
+  ): Promise<AutonomyMandate> {
+    if (!this.autonomyMandateRepo) {
+      throw new Error(
+        'AutonomyMandateRepository não configurado. ' +
+        'Passe autonomyMandateRepo no constructor para usar Incremento 18.'
+      );
+    }
+
+    // Incrementar uso
+    const updated = await this.autonomyMandateRepo.incrementUses(mandateId, now);
+
+    // Log de uso
+    await this.logEvent(
+      TipoEvento.AUTONOMY_USE_CONSUMED,
+      TipoEntidade.AUTONOMY_MANDATE,
+      mandateId,
+      {
+        mandateId,
+        agentId: updated.agentId,
+        uses: updated.uses,
+        maxUses: updated.maxUses,
+        lastUsedAt: updated.lastUsedAt
+      }
+    );
+
+    // Se atingiu limite de usos, logar expiração
+    if (updated.status === 'expired' && updated.expireReason === 'USES') {
+      await this.logEvent(
+        TipoEvento.AUTONOMY_EXPIRED,
+        TipoEntidade.AUTONOMY_MANDATE,
+        mandateId,
+        {
+          mandateId,
+          agentId: updated.agentId,
+          expiredAt: updated.expiredAt,
+          reason: 'USES'
+        }
+      );
+    }
+
+    return updated;
   }
 
   // ════════════════════════════════════════════════════════════════════════

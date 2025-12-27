@@ -69,6 +69,159 @@ export {
 export { EventLogRepositoryImpl } from './event-log/EventLogRepositoryImpl';
 
 // ════════════════════════════════════════════════════════════════════════════
+// CAMADA FECHADA (INCREMENTO 13)
+// ════════════════════════════════════════════════════════════════════════════
+
+export {
+  validateClosedLayer,
+  ClosedLayerResult,
+  ClosedLayerRuleId,
+  ClosedLayerRuleIdType
+} from './camada-fechada';
+
+// ════════════════════════════════════════════════════════════════════════════
+// CAMADA DE PESQUISA (INCREMENTO 14)
+// ════════════════════════════════════════════════════════════════════════════
+
+export {
+  // Tipos
+  ResearchMemoryMode,
+  ResearchLimits,
+  ResearchVariation,
+  ResearchInput,
+  ResearchVariationResult,
+  ResearchMemorySignals,
+  ResearchReport,
+  ResearchBaselineSummary,
+  RESEARCH_WRITE_FORBIDDEN,
+  ResearchWriteForbiddenError,
+  // Sandbox
+  ResearchSandbox,
+  SandboxConfig,
+  // Runner
+  ResearchRunner,
+  DEFAULT_MAX_VARIACOES,
+  DEFAULT_MAX_TEMPO_MS,
+  // Store
+  ResearchStore,
+  // ReadOnly Wrappers
+  ReadOnlySituacaoRepository,
+  ReadOnlyEpisodioRepository,
+  ReadOnlyDecisaoRepository,
+  ReadOnlyContratoRepository,
+  ReadOnlyProtocolRepository,
+  ReadOnlyRepositoryContext,
+  createReadOnlyContext
+} from './pesquisa';
+
+// ════════════════════════════════════════════════════════════════════════════
+// MULTIAGENTE (INCREMENTO 16)
+// ════════════════════════════════════════════════════════════════════════════
+
+export {
+  // Tipos
+  AgentProfile,
+  AggregationPolicy,
+  MultiAgentRunInput,
+  AgentProposalResult,
+  NoDecisionReason,
+  AggregationDecision,
+  MultiAgentRunResult,
+  MultiAgentError,
+  // Agregador
+  aggregate,
+  aggregateFirstValid,
+  aggregateMajorityByAlternative,
+  aggregateWeightedMajority,
+  aggregateRequireConsensus,
+  aggregateHumanOverrideRequired,
+  getValidResults,
+  applyTieBreak,
+  // Runner
+  runMultiAgent,
+  MultiAgentContext,
+  selectAlternativeForAgent
+} from './multiagente';
+
+// ════════════════════════════════════════════════════════════════════════════
+// AUTONOMIA GRADUADA (INCREMENTO 17 + 18 + 19)
+// ════════════════════════════════════════════════════════════════════════════
+
+export {
+  // Tipos (Inc 17 + 18)
+  MandateStatus,
+  MandateExpireReason,
+  AutonomyMode,
+  AutonomyMandate,
+  AutonomyCheckInput,
+  AutonomyCheckResult,
+  PERFIL_RISCO_ORDEM,
+  perfilExcede,
+  // Erros
+  AutonomyError,
+  HumanOverrideRequiredError,
+  EnsinoModeBlockedError,
+  MandateRequiredError,
+  MandateExpiredError,
+  MandateRevokedError,
+  PolicyNotAuthorizedError,
+  RiskProfileExceededError,
+  ClosedLayerBlockedError,
+  DomainNotAuthorizedError,
+  UseCaseNotAuthorizedError,
+  HumanTriggerMatchedError,
+  // Repositório
+  AutonomyMandateRepository,
+  AutonomyMandateRepositoryImpl,
+  // Avaliador
+  evaluate,
+  isMandateValid,
+  getEffectiveMode,
+  REGRA,
+  AutonomyCheckResultExtended,
+  // Serviço de Mandato (Inc 18)
+  MandateActivityResult,
+  MANDATE_RULE,
+  isMandateActive,
+  canConsumeUse,
+  consumeUse,
+  markAsExpired,
+  shouldMarkExpired,
+  getEffectiveStatus,
+  // Helpers de Tempo (Inc 18)
+  parseIsoDate,
+  isBefore,
+  isAfter,
+  isBeforeOrEqual,
+  isAfterOrEqual,
+  nowIso,
+  isWithinRange,
+  // Consequência (Inc 19)
+  ConsequenceSeverity,
+  ConsequenceCategory,
+  ConsequenceAutonomyTriggers,
+  ConsequenceAction,
+  ConsequenceRuleId,
+  ConsequenceEvaluationInput,
+  ConsequenceEffects,
+  ConsequenceAutonomyResult,
+  applyTriggerDefaults,
+  getDegradedMode,
+  RuleContext,
+  ruleSeveridadeCriticaRevoke,
+  ruleViolacaoLimitesSuspend,
+  rulePerdaRelevanteDegrade,
+  ruleLegalEticaHumanReview,
+  ruleNoAction,
+  RULES_IN_ORDER,
+  evaluateRules,
+  createRuleContext,
+  evaluateConsequenceImpact,
+  AutonomyConsequenceService,
+  AutonomyConsequenceContext
+} from './autonomy';
+
+// ════════════════════════════════════════════════════════════════════════════
 // UTILITÁRIOS
 // ════════════════════════════════════════════════════════════════════════════
 

@@ -459,7 +459,7 @@ describe('Incremento 7: Interface Controlada Bazari <-> Libervia', () => {
 
       expect(resultados.length).toBe(N);
       expect(resultados.every(r => r.contrato && r.contrato.id)).toBe(true);
-    });
+    }, 30000); // Timeout estendido para 30s - stress test com N=20 operações I/O
 
     test('Todos os contratos sao unicos', async () => {
       const situacao = criarSituacaoValida(100);

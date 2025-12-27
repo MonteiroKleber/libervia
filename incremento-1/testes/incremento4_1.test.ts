@@ -281,7 +281,7 @@ describe('Incremento 4.1 - EventLog Production Safety', () => {
       // Usar método interno para corromper em memória
       for (let i = 0; i < 25; i++) {
         // Corromper em memória (usando método de debug)
-        (eventLog as any)._corruptEntry(0, 'current_hash', `CORRUPTED_${i}`);
+        await (eventLog as any)._corruptEntry(0, 'current_hash', `CORRUPTED_${i}`);
 
         // Verificar (vai falhar e adicionar erro)
         await orq.VerifyEventLogNow();

@@ -161,7 +161,7 @@ describe('Incremento 4 - Event-Log com Hash Encadeado', () => {
       await eventLog.append('Libervia', TipoEvento.DECISAO_REGISTRADA, TipoEntidade.DECISAO, 'dec-1', { id: 'dec-1' });
 
       // Corromper o segundo evento
-      (eventLog as any)._corruptEntry(1, 'payload_hash', 'hash_corrompido');
+      await (eventLog as any)._corruptEntry(1, 'payload_hash', 'hash_corrompido');
 
       const result = await eventLog.verifyChain();
 
@@ -177,7 +177,7 @@ describe('Incremento 4 - Event-Log com Hash Encadeado', () => {
       await eventLog.append('Libervia', TipoEvento.EPISODIO_CRIADO, TipoEntidade.EPISODIO, 'ep-1', { id: 'ep-1' });
 
       // Corromper o encadeamento
-      (eventLog as any)._corruptEntry(1, 'previous_hash', 'hash_invalido');
+      await (eventLog as any)._corruptEntry(1, 'previous_hash', 'hash_invalido');
 
       const result = await eventLog.verifyChain();
 
@@ -269,7 +269,7 @@ describe('Incremento 4 - Event-Log com Hash Encadeado', () => {
       }
 
       // Corromper evento no índice 5
-      (eventLog as any)._corruptEntry(5, 'evento', 'EVENTO_CORROMPIDO');
+      await (eventLog as any)._corruptEntry(5, 'evento', 'EVENTO_CORROMPIDO');
 
       const result = await eventLog.verifyChain();
 
@@ -284,7 +284,7 @@ describe('Incremento 4 - Event-Log com Hash Encadeado', () => {
       await eventLog.append('Libervia', 'TESTE', 'Entidade', 'id-1', {});
 
       // Corromper genesis
-      (eventLog as any)._corruptEntry(0, 'previous_hash', 'hash_invalido');
+      await (eventLog as any)._corruptEntry(0, 'previous_hash', 'hash_invalido');
 
       const result = await eventLog.verifyChain();
 
