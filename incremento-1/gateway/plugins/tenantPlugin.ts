@@ -34,7 +34,8 @@ declare module 'fastify' {
 const SKIP_TENANT_PREFIXES = [
   '/health',
   '/admin',
-  '/metrics'
+  '/metrics',
+  '/internal'
 ];
 
 function shouldSkipTenant(url: string): boolean {

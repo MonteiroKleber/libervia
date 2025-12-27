@@ -24,6 +24,8 @@ import { healthRoutes } from './routes/healthRoutes';
 import { adminRoutes } from './routes/adminRoutes';
 import { publicRoutes } from './routes/publicRoutes';
 import { queryRoutes } from './routes/queryRoutes';
+import { metricsRoutes } from './routes/metricsRoutes';
+import { telemetryMiddleware } from './telemetry/TelemetryMiddleware';
 import fastifyStatic from '@fastify/static';
 import * as path from 'path';
 
@@ -120,6 +122,9 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   // Rate limiting (depende de tenant)
   await app.register(rateLimitPlugin);
 
+  // Telemetry middleware (Inc 24 - coleta métricas HTTP)
+  await app.register(telemetryMiddleware);
+
   // ══════════════════════════════════════════════════════════════════════════
   // REGISTRAR ROTAS
   // ══════════════════════════════════════════════════════════════════════════
@@ -132,6 +137,9 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   // Query APIs (Inc 21 - Painel Operacional)
   await app.register(queryRoutes, { prefix: '/admin/query' });
+
+  // Metrics Routes (Inc 24 - Telemetria)
+  await app.register(metricsRoutes);
 
   // Admin UI static files (Inc 21)
   await app.register(fastifyStatic, {

@@ -202,6 +202,9 @@
       case 'eventlog':
         loadEventLog();
         break;
+      case 'metrics':
+        loadMetrics();
+        break;
     }
   }
 
@@ -701,6 +704,53 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // METRICS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async function loadMetrics() {
+    const outputContainer = $('#metrics-output');
+    outputContainer.textContent = 'Carregando...';
+
+    if (state.role !== 'global_admin') {
+      outputContainer.textContent = 'Acesso restrito a global_admin';
+      return;
+    }
+
+    try {
+      const prometheusFormat = $('#metrics-prometheus-format')?.checked;
+      const endpoint = prometheusFormat ? '/internal/metrics' : '/internal/metrics/json';
+
+      const headers = {
+        'Authorization': `Bearer ${state.token}`
+      };
+
+      const response = await fetch(endpoint, { headers });
+
+      // Capturar X-Request-Id
+      const reqId = response.headers.get('X-Request-Id');
+      if (reqId) {
+        state.lastRequestId = reqId;
+        requestIdEl.textContent = `Request: ${reqId}`;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      if (prometheusFormat) {
+        const text = await response.text();
+        outputContainer.textContent = text;
+      } else {
+        const json = await response.json();
+        outputContainer.textContent = JSON.stringify(json, null, 2);
+      }
+    } catch (err) {
+      outputContainer.textContent = `Erro: ${err.message}`;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // UTILITIES
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -742,6 +792,8 @@
   $('#btn-refresh-mandates')?.addEventListener('click', loadMandates);
   $('#btn-refresh-consequences')?.addEventListener('click', loadConsequences);
   $('#btn-refresh-eventlog')?.addEventListener('click', loadEventLog);
+  $('#btn-refresh-metrics')?.addEventListener('click', loadMetrics);
+  $('#metrics-prometheus-format')?.addEventListener('change', loadMetrics);
 
   // Filter changes
   $('#review-status-filter')?.addEventListener('change', loadReviews);

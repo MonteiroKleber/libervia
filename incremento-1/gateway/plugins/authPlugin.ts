@@ -223,6 +223,39 @@ const authPluginImpl: FastifyPluginAsync<AuthPluginOptions> = async (app, opts) 
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // INTERNAL ROUTES (Inc 24 - Metrics): handled by metricsRoutes with own RBAC
+    // ══════════════════════════════════════════════════════════════════════════
+    if (url.startsWith('/internal')) {
+      const token = extractBearerToken(request.headers.authorization);
+
+      if (!token) {
+        // RBAC checks happen in metricsRoutes - just don't set authContext
+        return;
+      }
+
+      // Tentar validar como global_admin
+      const globalAuthContext = validateGlobalAdminToken(token);
+      if (globalAuthContext) {
+        request.authContext = globalAuthContext;
+        return;
+      }
+
+      // Para rotas /internal/tenants/:tenantId/*, tentar validar como tenant_admin
+      const tenantMatch = url.match(/^\/internal\/tenants\/([^/]+)/);
+      if (tenantMatch && tenantMatch[1]) {
+        const tenantId = tenantMatch[1];
+        const tenantAuthContext = app.registry.validateTenantToken(tenantId, token);
+        if (tenantAuthContext) {
+          request.authContext = tenantAuthContext;
+          return;
+        }
+      }
+
+      // Token inválido - RBAC checks in metricsRoutes will handle 403
+      return;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // ADMIN ROUTES
     // ══════════════════════════════════════════════════════════════════════════
     if (url.startsWith('/admin')) {

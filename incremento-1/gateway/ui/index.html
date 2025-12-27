@@ -47,6 +47,7 @@
         <button class="nav-btn" data-view="consequences">Consequencias</button>
         <button class="nav-btn" data-view="timeline">Timeline</button>
         <button class="nav-btn global-only" data-view="eventlog">EventLog</button>
+        <button class="nav-btn global-only" data-view="metrics">Metricas</button>
       </nav>
 
       <!-- Content Area -->
@@ -147,6 +148,20 @@
           </div>
           <div id="eventlog-list" class="data-list">
             <!-- Events populated by JS -->
+          </div>
+        </div>
+
+        <!-- Metrics View (global_admin only) -->
+        <div id="view-metrics" class="view hidden">
+          <h2>Metricas do Sistema</h2>
+          <div class="filters">
+            <button id="btn-refresh-metrics" class="btn btn-secondary">Atualizar</button>
+            <label class="toggle-label">
+              <input type="checkbox" id="metrics-prometheus-format"> Formato Prometheus
+            </label>
+          </div>
+          <div id="metrics-content" class="metrics-container">
+            <pre id="metrics-output" class="metrics-output"></pre>
           </div>
         </div>
       </main>
