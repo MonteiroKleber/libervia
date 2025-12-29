@@ -1,0 +1,72 @@
+# ════════════════════════════════════════════════════════════════════════════
+# LIBERVIA — Docker Compose for Local Development
+# Incremento 23 — Deploy Baseline + CI/CD
+# ════════════════════════════════════════════════════════════════════════════
+#
+# Uso:
+#   docker-compose up -d
+#   docker-compose logs -f
+#   docker-compose down
+#
+# O gateway estará disponível em: http://localhost:3000
+# ════════════════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ──────────────────────────────────────────────────────────────────────────
+  # LIBERVIA GATEWAY
+  # ──────────────────────────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: libervia-gateway
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    # ────────────────────────────────────────────────────────────────────────
+    # VOLUMES
+    # ────────────────────────────────────────────────────────────────────────
+    # Persiste dados de tenants entre reinícios
+    volumes:
+      - libervia-data:/data
+
+    # ────────────────────────────────────────────────────────────────────────
+    # ENVIRONMENT VARIABLES
+    # ────────────────────────────────────────────────────────────────────────
+    environment:
+      # REQUIRED: Set LIBERVIA_AUTH_PEPPER before starting
+      # Use: export LIBERVIA_AUTH_PEPPER=your-secret-pepper
+      - LIBERVIA_AUTH_PEPPER=${LIBERVIA_AUTH_PEPPER:?LIBERVIA_AUTH_PEPPER is required}
+
+      # REQUIRED in production: Admin token for /admin/* routes
+      - GATEWAY_ADMIN_TOKEN=${GATEWAY_ADMIN_TOKEN:-admin-token-dev}
+
+      # Optional: Override defaults if needed
+      - NODE_ENV=${NODE_ENV:-development}
+      - GATEWAY_PORT=3000
+      - GATEWAY_HOST=0.0.0.0
+      - GATEWAY_BASE_DIR=/data
+      - GATEWAY_LOG_LEVEL=${GATEWAY_LOG_LEVEL:-info}
+      - GATEWAY_CORS_ORIGINS=${GATEWAY_CORS_ORIGINS:-*}
+
+    # ────────────────────────────────────────────────────────────────────────
+    # HEALTHCHECK
+    # ────────────────────────────────────────────────────────────────────────
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+# ════════════════════════════════════════════════════════════════════════════
+# VOLUMES
+# ════════════════════════════════════════════════════════════════════════════
+volumes:
+  libervia-data:
+    driver: local
+    name: libervia-data

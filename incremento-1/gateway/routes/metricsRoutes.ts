@@ -1,10 +1,12 @@
 /**
  * INCREMENTO 24 — Telemetria & Métricas: Routes
+ * INCREMENTO 25 — Runbook Operacional + SLOs + Alerting
  *
- * Endpoints para exposição de métricas.
+ * Endpoints para exposição de métricas e saude operacional.
  * Respeita RBAC:
  * - /internal/metrics: global_admin only
  * - /internal/tenants/:id/metrics: tenant_admin do tenant OU global_admin
+ * - /internal/health/operational: global_admin only
  */
 
 import { FastifyPluginAsync } from 'fastify';
@@ -14,6 +16,7 @@ import {
   generateSnapshot,
   generateTenantSnapshot
 } from '../telemetry/TelemetrySnapshot';
+import { assessOperationalHealth, getQuickHealthStatus } from '../health/OperationalHealth';
 
 // ════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -166,4 +169,64 @@ export const metricsRoutes: FastifyPluginAsync = async (app) => {
       return { error: 'Forbidden', code: 'INSUFFICIENT_ROLE', message: 'tenant_admin or global_admin required' };
     }
   );
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // GET /internal/health/operational (Operational Health Assessment)
+  // INCREMENTO 25
+  // ──────────────────────────────────────────────────────────────────────────
+
+  app.get('/internal/health/operational', async (request, reply) => {
+    // RBAC: requer global_admin
+    const authContext = (request as any).authContext;
+
+    if (!authContext) {
+      reply.code(401);
+      return { error: 'Unauthorized', code: 'MISSING_TOKEN' };
+    }
+
+    if (authContext.role !== 'global_admin') {
+      reply.code(403);
+      return { error: 'Forbidden', code: 'INSUFFICIENT_ROLE', message: 'global_admin required' };
+    }
+
+    // Avaliar saude operacional
+    const health = assessOperationalHealth();
+
+    // Retornar com status code apropriado
+    if (health.status === 'CRITICAL') {
+      reply.code(503);
+    } else if (health.status === 'DEGRADED') {
+      reply.code(200); // 200 mas com status DEGRADED no body
+    }
+
+    return health;
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // GET /internal/health/operational/status (Quick Status Check)
+  // INCREMENTO 25
+  // ──────────────────────────────────────────────────────────────────────────
+
+  app.get('/internal/health/operational/status', async (request, reply) => {
+    // RBAC: requer global_admin
+    const authContext = (request as any).authContext;
+
+    if (!authContext) {
+      reply.code(401);
+      return { error: 'Unauthorized', code: 'MISSING_TOKEN' };
+    }
+
+    if (authContext.role !== 'global_admin') {
+      reply.code(403);
+      return { error: 'Forbidden', code: 'INSUFFICIENT_ROLE', message: 'global_admin required' };
+    }
+
+    // Retornar apenas o status
+    const status = getQuickHealthStatus();
+
+    return {
+      status,
+      timestamp: new Date().toISOString()
+    };
+  });
 };

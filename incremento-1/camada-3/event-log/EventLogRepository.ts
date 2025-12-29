@@ -147,6 +147,15 @@ interface EventLogRepository {
   count(): Promise<number>;
 
   /**
+   * INCREMENTO 26: Adiciona um evento já formado (para restore de backup).
+   * NÃO recalcula hashes - usa os hashes do evento original.
+   * Usado apenas por operações de restore.
+   *
+   * @param entry Evento completo (já com hashes calculados)
+   */
+  appendRaw(entry: EventLogEntry): Promise<void>;
+
+  /**
    * Verifica a integridade da cadeia de hashes.
    * Recalcula hashes em sequência e para na primeira quebra.
    * NUNCA corrige automaticamente.

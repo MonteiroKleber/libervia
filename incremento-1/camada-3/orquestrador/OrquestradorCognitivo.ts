@@ -60,6 +60,20 @@ import {
   ReviewCaseServiceContext,
   CreateReviewCaseInput
 } from '../review';
+import {
+  BackupService,
+  BackupDataProviders,
+  RestoreService,
+  RestoreExistenceCheckers,
+  RestoreAppenders,
+  BackupRepository,
+  BackupRepositoryImpl,
+  BackupSnapshot,
+  BackupOptions,
+  BackupValidationResult,
+  RestoreOptions,
+  RestoreResult
+} from '../backup';
 
 // ════════════════════════════════════════════════════════════════════════
 // INCREMENTO 4.1: TIPOS PARA HEALTH DO EVENTLOG
@@ -100,6 +114,9 @@ class OrquestradorCognitivo {
   private autonomyMandateRepo?: AutonomyMandateRepository; // INCREMENTO 17
   private reviewCaseRepo?: ReviewCaseRepository; // INCREMENTO 20
   private tenantId: string = 'default'; // INCREMENTO 20: Tenant padrão
+  private backupService?: BackupService; // INCREMENTO 26
+  private restoreService?: RestoreService; // INCREMENTO 26
+  private backupRepo?: BackupRepository; // INCREMENTO 26
 
   constructor(
     private situacaoRepo: SituacaoRepository,
@@ -1814,6 +1831,237 @@ class OrquestradorCognitivo {
     }
 
     return updated;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // INCREMENTO 26: BACKUP, RESTORE & DISASTER RECOVERY
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Configura os serviços de backup.
+   * Deve ser chamado após o construtor para habilitar funcionalidades de backup.
+   *
+   * @param backupDir - Diretório para armazenar backups
+   */
+  async ConfigurarBackup(backupDir: string): Promise<void> {
+    this.backupRepo = new BackupRepositoryImpl(backupDir);
+
+    // Criar provedores de dados
+    // NOTA: Alguns repositórios não têm getAll(), então retornamos vazio
+    // O backup captura o que é possível com as interfaces disponíveis
+    const dataProviders: BackupDataProviders = {
+      getEventLog: async (_tenantId?: string) => {
+        if (!this.eventLog) return [];
+        const all = await this.eventLog.getAll();
+        return all;
+      },
+      getObservacoesDeConsequencia: async (_tenantId?: string) => {
+        // ObservacaoRepository não tem getAll() - backup de observações
+        // requer implementação customizada ou extensão da interface
+        return [];
+      },
+      getAutonomyMandates: async (_tenantId?: string) => {
+        if (!this.autonomyMandateRepo) return [];
+        return this.autonomyMandateRepo.getAll();
+      },
+      getReviewCases: async (tenantId?: string) => {
+        // ReviewCaseRepository usa list() ao invés de getAll()
+        if (!this.reviewCaseRepo) return [];
+        if (tenantId) {
+          return this.reviewCaseRepo.list(tenantId);
+        }
+        // Sem tenant específico, não podemos listar todos
+        // Isso é uma limitação intencional do design multi-tenant
+        return [];
+      },
+      getTenantRegistry: async () => {
+        // TenantRegistry é gerenciado externamente, retornar vazio por padrão
+        return [];
+      }
+    };
+
+    // Callback para logging de eventos
+    const onBackupEvent = async (evento: string, backupId: string, details: Record<string, unknown>) => {
+      await this.logEvent(
+        evento as TipoEvento,
+        TipoEntidade.BACKUP,
+        backupId,
+        details
+      );
+    };
+
+    this.backupService = new BackupService(
+      this.backupRepo,
+      dataProviders,
+      onBackupEvent
+    );
+
+    // Criar checkers de existência
+    const existenceCheckers: RestoreExistenceCheckers = {
+      eventExists: async (eventId: string) => {
+        if (!this.eventLog) return false;
+        const event = await this.eventLog.getById(eventId);
+        return event !== null;
+      },
+      observacaoExists: async (observacaoId: string) => {
+        if (!this.observacaoRepo) return false;
+        const obs = await this.observacaoRepo.getById(observacaoId);
+        return obs !== null;
+      },
+      mandateExists: async (mandateId: string) => {
+        if (!this.autonomyMandateRepo) return false;
+        const mandate = await this.autonomyMandateRepo.getById(mandateId);
+        return mandate !== null;
+      },
+      reviewCaseExists: async (caseId: string) => {
+        // ReviewCaseRepository.getById requer tenantId
+        // Para restore, assumimos que o caseId contém info suficiente
+        // ou retornamos false (será adicionado como novo)
+        if (!this.reviewCaseRepo) return false;
+        // Tentamos buscar usando o tenantId da instância
+        const reviewCase = await this.reviewCaseRepo.getById(this.tenantId, caseId);
+        return reviewCase !== null;
+      },
+      tenantExists: async (_tenantId: string) => {
+        // TenantRegistry gerenciado externamente
+        return false;
+      }
+    };
+
+    // Criar appenders (append-only)
+    const appenders: RestoreAppenders = {
+      appendEvent: async (event) => {
+        if (!this.eventLog) return;
+        await this.eventLog.appendRaw(event);
+      },
+      appendObservacao: async (observacao) => {
+        if (!this.observacaoRepo) return;
+        await this.observacaoRepo.create(observacao as any);
+      },
+      appendMandate: async (mandate) => {
+        if (!this.autonomyMandateRepo) return;
+        await this.autonomyMandateRepo.create(mandate as any);
+      },
+      appendReviewCase: async (reviewCase) => {
+        // ReviewCaseRepository usa createOrGetOpenByObservacaoId
+        // Para restore, precisamos de uma operação mais direta
+        // Por ora, restore de review cases não é suportado nativamente
+        // (requer extensão da interface ReviewCaseRepository)
+        return;
+      },
+      appendTenant: async (_tenant) => {
+        // TenantRegistry gerenciado externamente
+      }
+    };
+
+    // Callback para logging de eventos de restore
+    const onRestoreEvent = async (evento: string, backupId: string, details: Record<string, unknown>) => {
+      await this.logEvent(
+        evento as TipoEvento,
+        TipoEntidade.BACKUP,
+        backupId,
+        details
+      );
+    };
+
+    this.restoreService = new RestoreService(
+      this.backupRepo,
+      this.backupService,
+      existenceCheckers,
+      appenders,
+      onRestoreEvent
+    );
+  }
+
+  /**
+   * Cria um backup do estado atual.
+   *
+   * @param options - Opções de backup (tenant, entidades a incluir)
+   * @returns Snapshot do backup criado
+   */
+  async CriarBackup(options?: BackupOptions): Promise<BackupSnapshot> {
+    if (!this.backupService) {
+      throw new Error(
+        'Serviço de backup não configurado. ' +
+        'Chame ConfigurarBackup(backupDir) primeiro.'
+      );
+    }
+
+    return this.backupService.createBackup(options);
+  }
+
+  /**
+   * Valida um backup existente.
+   *
+   * @param backupId - ID do backup a validar
+   * @returns Resultado da validação
+   */
+  async ValidarBackup(backupId: string): Promise<BackupValidationResult> {
+    if (!this.backupService) {
+      throw new Error(
+        'Serviço de backup não configurado. ' +
+        'Chame ConfigurarBackup(backupDir) primeiro.'
+      );
+    }
+
+    return this.backupService.validateBackup(backupId);
+  }
+
+  /**
+   * Restaura um backup.
+   *
+   * PRINCÍPIO: Append-only - nunca sobrescreve dados existentes.
+   *
+   * @param backupId - ID do backup a restaurar
+   * @param options - Opções de restauração (mode: 'dry-run' | 'effective')
+   * @returns Resultado da restauração
+   */
+  async RestaurarBackup(
+    backupId: string,
+    options: RestoreOptions
+  ): Promise<RestoreResult> {
+    if (!this.restoreService) {
+      throw new Error(
+        'Serviço de restore não configurado. ' +
+        'Chame ConfigurarBackup(backupDir) primeiro.'
+      );
+    }
+
+    return this.restoreService.restore(backupId, options);
+  }
+
+  /**
+   * Lista backups disponíveis.
+   *
+   * @param tenantId - Filtrar por tenant (opcional)
+   * @returns Lista de metadados de backups
+   */
+  async ListarBackups(tenantId?: string): Promise<BackupSnapshot['metadata'][]> {
+    if (!this.backupService) {
+      throw new Error(
+        'Serviço de backup não configurado. ' +
+        'Chame ConfigurarBackup(backupDir) primeiro.'
+      );
+    }
+
+    return this.backupService.listBackups(tenantId);
+  }
+
+  /**
+   * Obtém o backup mais recente.
+   *
+   * @param tenantId - Filtrar por tenant (opcional)
+   * @returns Snapshot do backup mais recente ou null
+   */
+  async GetBackupMaisRecente(tenantId?: string): Promise<BackupSnapshot | null> {
+    if (!this.backupService) {
+      throw new Error(
+        'Serviço de backup não configurado. ' +
+        'Chame ConfigurarBackup(backupDir) primeiro.'
+      );
+    }
+
+    return this.backupService.getLatestBackup(tenantId);
   }
 
   // ════════════════════════════════════════════════════════════════════════

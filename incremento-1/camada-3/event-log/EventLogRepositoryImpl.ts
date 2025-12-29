@@ -505,6 +505,34 @@ class EventLogRepositoryImpl implements EventLogRepository {
     return entry;
   }
 
+  /**
+   * INCREMENTO 26: Adiciona um evento já formado (para restore de backup).
+   * NÃO recalcula hashes - usa os hashes do evento original.
+   * Usado apenas por operações de restore.
+   */
+  async appendRaw(entry: EventLogEntry): Promise<void> {
+    this.checkInitialized();
+
+    // Adicionar ao segmento atual
+    this.currentSegmentEntries.push(entry);
+    this.totalEvents++;
+    this.lastHash = entry.current_hash;
+    this.eventsSinceSnapshot++;
+
+    // Persistir segmento
+    await this.persistCurrentSegment();
+
+    // Invalidar cache
+    this.invalidateCache();
+
+    // Verificar se precisa rotacionar
+    if (this.currentSegmentEntries.length >= this.config.segmentSize) {
+      await this.rotateSegment();
+    } else if (this.eventsSinceSnapshot >= this.config.snapshotEvery) {
+      await this.updateSnapshot();
+    }
+  }
+
   async getAll(): Promise<EventLogEntry[]> {
     this.checkInitialized();
 
